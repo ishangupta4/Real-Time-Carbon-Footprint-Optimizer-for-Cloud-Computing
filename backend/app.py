@@ -37,71 +37,6 @@ def health_check():
         'version': '1.0.0'
     })
 
-@app.route('/api/debug-carbon-api', methods=['GET'])
-def debug_carbon_api():
-    """
-    Diagnostic endpoint to see raw UK Carbon Intensity API response
-    """
-    import requests
-    import json
-    
-    BASE_URL = "https://api.carbonintensity.org.uk"
-    
-    try:
-        response = requests.get(f"{BASE_URL}/regional", timeout=10)
-        response.raise_for_status()
-        data = response.json()
-        
-        # Get first region to inspect structure
-        regions = data.get('data', [])
-        
-        result = {
-            'raw_response_keys': list(data.keys()),
-            'num_regions': len(regions),
-            'first_region_raw': regions[0] if regions else None,
-            'all_regions_summary': []
-        }
-        
-        # Inspect each region's structure
-        for region in regions[:3]:  # Just first 3 for brevity
-            region_id = region.get('regionid')
-            shortname = region.get('shortname')
-            
-            # Get the data array
-            region_data = region.get('data', [])
-            
-            # Check what's actually in the intensity field
-            if region_data:
-                first_data = region_data[0]
-                intensity_raw = first_data.get('intensity')
-                
-                result['all_regions_summary'].append({
-                    'regionid': region_id,
-                    'shortname': shortname,
-                    'data_array_length': len(region_data),
-                    'first_data_keys': list(first_data.keys()) if first_data else None,
-                    'intensity_raw': intensity_raw,
-                    'intensity_type': str(type(intensity_raw)),
-                    'intensity_forecast': intensity_raw.get('forecast') if isinstance(intensity_raw, dict) else 'NOT A DICT',
-                    'intensity_actual': intensity_raw.get('actual') if isinstance(intensity_raw, dict) else 'NOT A DICT',
-                })
-            else:
-                result['all_regions_summary'].append({
-                    'regionid': region_id,
-                    'shortname': shortname,
-                    'data_array_length': 0,
-                    'error': 'No data array'
-                })
-        
-        return json.dumps(result, indent=2, default=str), 200, {'Content-Type': 'application/json'}
-        
-    except Exception as e:
-        import traceback
-        return {
-            'error': str(e),
-            'traceback': traceback.format_exc()
-        }, 500
-
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({'error': 'Endpoint not found'}), 404
@@ -113,4 +48,4 @@ def internal_error(error):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5040)

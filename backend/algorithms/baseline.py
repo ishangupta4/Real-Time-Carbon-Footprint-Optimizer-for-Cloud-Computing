@@ -1,10 +1,13 @@
+# File: backend/algorithms/baseline.py
+
+import time
+import copy
 from typing import List, Dict
 from datetime import datetime, timedelta
+
 from models.workload import Workload
 from models.datacenter import Datacenter
 from models.schedule import Assignment, Schedule
-import time
-import copy
 
 
 def fcfs_schedule(
@@ -13,178 +16,68 @@ def fcfs_schedule(
     carbon_data: Dict[str, Dict]
 ) -> Schedule:
     """
-    First-Come-First-Serve baseline - assigns tasks to first 
-    available datacenter in order, ignoring carbon intensity.
+    FCFS (First Come First Serve): Assigns to datacenters in LIST ORDER.
     
-    Time Complexity: O(n * d)
-    Space Complexity: O(n)
+    Logic:
+    1. Process workloads in arrival order
+    2. For each workload, try DCs in the ORDER they appear in the list
+    3. Assign to FIRST DC with available capacity
+    
+    This does NOT consider carbon intensity at all - it just uses
+    whatever DC comes first in the list.
+    
+    KEY DIFFERENCE FROM GREEDY:
+    - FCFS: Uses list order (index 0, then 1, then 2...)
+    - Greedy: Sorts by carbon intensity first
     """
     start_time = time.time()
     
-    dcs = [copy.deepcopy(dc) for dc in datacenters]
-    sorted_workloads = sorted(workloads, key=lambda w: w.arrival_time)
+    # Deep copy
+    dcs = copy.deepcopy(datacenters)
+    
+    # Sort workloads by arrival time
+    sorted_workloads = sorted(workloads, key=lambda w: w.arrival_time or datetime.utcnow())
     
     assignments = []
     
     for workload in sorted_workloads:
         assigned = False
         
-        # Try each datacenter in order (no sorting by carbon)
+        # KEY: Try DCs in LIST ORDER (no sorting by carbon!)
         for dc in dcs:
             if dc.can_accommodate(workload.cpu, workload.memory):
+                # Get carbon info (for reporting only, NOT for selection)
                 dc_carbon = carbon_data.get(dc.id, {'intensity': 200, 'renewable': 30})
+                carbon_intensity = dc_carbon.get('intensity', 200)
+                renewable_pct = dc_carbon.get('renewable', 30)
                 
                 energy_kwh = workload.energy_kwh
-                carbon_emissions = energy_kwh * dc_carbon.get('intensity', 200)
+                carbon_emissions = energy_kwh * carbon_intensity
                 cost = workload.cpu * workload.duration * dc.cost_per_core_hour
                 
                 assignment = Assignment(
                     workload_id=workload.id,
                     datacenter_id=dc.id,
-                    start_time=workload.arrival_time,
-                    end_time=workload.arrival_time + timedelta(hours=workload.duration),
+                    start_time=workload.arrival_time or datetime.utcnow(),
+                    end_time=(workload.arrival_time or datetime.utcnow()) + timedelta(hours=workload.duration),
                     carbon_emissions=carbon_emissions,
                     cost=cost,
-                    carbon_intensity=dc_carbon.get('intensity', 200),
-                    renewable_percentage=dc_carbon.get('renewable', 30)
+                    carbon_intensity=carbon_intensity,
+                    renewable_percentage=renewable_pct
                 )
                 
                 assignments.append(assignment)
                 dc.allocate(workload.cpu, workload.memory)
                 assigned = True
-                break
+                break  # Move to next workload
         
         if not assigned:
-            # Task couldn't be scheduled
-            pass
+            pass  # Could not schedule this workload
     
     execution_time = (time.time() - start_time) * 1000
     
     return Schedule(
         assignments=assignments,
         algorithm_used='fcfs',
-        execution_time_ms=execution_time
-    )
-
-
-def round_robin_schedule(
-    workloads: List[Workload],
-    datacenters: List[Datacenter],
-    carbon_data: Dict[str, Dict]
-) -> Schedule:
-    """
-    Round Robin baseline - distributes tasks evenly across 
-    datacenters, ignoring carbon intensity.
-    
-    Time Complexity: O(n)
-    Space Complexity: O(n)
-    """
-    start_time = time.time()
-    
-    dcs = [copy.deepcopy(dc) for dc in datacenters]
-    sorted_workloads = sorted(workloads, key=lambda w: w.arrival_time)
-    
-    assignments = []
-    dc_index = 0
-    
-    for workload in sorted_workloads:
-        attempts = 0
-        assigned = False
-        
-        # Try datacenters in round-robin fashion
-        while attempts < len(dcs):
-            dc = dcs[dc_index % len(dcs)]
-            
-            if dc.can_accommodate(workload.cpu, workload.memory):
-                dc_carbon = carbon_data.get(dc.id, {'intensity': 200, 'renewable': 30})
-                
-                energy_kwh = workload.energy_kwh
-                carbon_emissions = energy_kwh * dc_carbon.get('intensity', 200)
-                cost = workload.cpu * workload.duration * dc.cost_per_core_hour
-                
-                assignment = Assignment(
-                    workload_id=workload.id,
-                    datacenter_id=dc.id,
-                    start_time=workload.arrival_time,
-                    end_time=workload.arrival_time + timedelta(hours=workload.duration),
-                    carbon_emissions=carbon_emissions,
-                    cost=cost,
-                    carbon_intensity=dc_carbon.get('intensity', 200),
-                    renewable_percentage=dc_carbon.get('renewable', 30)
-                )
-                
-                assignments.append(assignment)
-                dc.allocate(workload.cpu, workload.memory)
-                assigned = True
-                break
-            
-            dc_index += 1
-            attempts += 1
-        
-        dc_index += 1  # Move to next DC for next task
-    
-    execution_time = (time.time() - start_time) * 1000
-    
-    return Schedule(
-        assignments=assignments,
-        algorithm_used='round_robin',
-        execution_time_ms=execution_time
-    )
-
-
-def random_schedule(
-    workloads: List[Workload],
-    datacenters: List[Datacenter],
-    carbon_data: Dict[str, Dict]
-) -> Schedule:
-    """
-    Random baseline - randomly assigns tasks to datacenters
-    with available capacity.
-    
-    Time Complexity: O(n * d)
-    Space Complexity: O(n)
-    """
-    import random
-    
-    start_time = time.time()
-    
-    dcs = [copy.deepcopy(dc) for dc in datacenters]
-    sorted_workloads = sorted(workloads, key=lambda w: w.arrival_time)
-    
-    assignments = []
-    
-    for workload in sorted_workloads:
-        available_dcs = [
-            dc for dc in dcs 
-            if dc.can_accommodate(workload.cpu, workload.memory)
-        ]
-        
-        if available_dcs:
-            dc = random.choice(available_dcs)
-            dc_carbon = carbon_data.get(dc.id, {'intensity': 200, 'renewable': 30})
-            
-            energy_kwh = workload.energy_kwh
-            carbon_emissions = energy_kwh * dc_carbon.get('intensity', 200)
-            cost = workload.cpu * workload.duration * dc.cost_per_core_hour
-            
-            assignment = Assignment(
-                workload_id=workload.id,
-                datacenter_id=dc.id,
-                start_time=workload.arrival_time,
-                end_time=workload.arrival_time + timedelta(hours=workload.duration),
-                carbon_emissions=carbon_emissions,
-                cost=cost,
-                carbon_intensity=dc_carbon.get('intensity', 200),
-                renewable_percentage=dc_carbon.get('renewable', 30)
-            )
-            
-            assignments.append(assignment)
-            dc.allocate(workload.cpu, workload.memory)
-    
-    execution_time = (time.time() - start_time) * 1000
-    
-    return Schedule(
-        assignments=assignments,
-        algorithm_used='random',
         execution_time_ms=execution_time
     )

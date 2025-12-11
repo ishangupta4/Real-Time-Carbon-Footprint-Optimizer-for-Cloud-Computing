@@ -1,10 +1,13 @@
-from typing import List, Dict, Tuple
+# File: backend/algorithms/greedy.py
+
+import time
+import copy
+from typing import List, Dict
 from datetime import datetime, timedelta
+
 from models.workload import Workload
 from models.datacenter import Datacenter
 from models.schedule import Assignment, Schedule
-import time
-import copy
 
 
 def greedy_schedule(
@@ -13,68 +16,53 @@ def greedy_schedule(
     carbon_data: Dict[str, Dict]
 ) -> Schedule:
     """
-    Greedy scheduling algorithm - assigns each workload to datacenter
-    with lowest current carbon intensity that has sufficient capacity.
+    GREEDY: Always picks datacenter with LOWEST carbon intensity.
     
-    Time Complexity: O(n * d * log(d)) where n=tasks, d=datacenters
-    Space Complexity: O(n + d)
+    Logic:
+    1. Sort datacenters by carbon intensity (lowest first)
+    2. For each workload, assign to first DC with capacity
     
-    Args:
-        workloads: List of Workload objects to schedule
-        datacenters: List of Datacenter objects with capacity
-        carbon_data: Dict {datacenter_id: {'intensity': float, 'renewable': float}}
-    
-    Returns:
-        Schedule object with all assignments and metrics
+    This gives better results than FCFS because it prioritizes
+    low-carbon datacenters.
     """
     start_time = time.time()
     
-    # Create deep copies to avoid modifying originals
-    dcs = [copy.deepcopy(dc) for dc in datacenters]
+    # Deep copy to avoid modifying originals
+    dcs = copy.deepcopy(datacenters)
     
-    # Sort workloads by arrival time (earliest first)
-    sorted_workloads = sorted(workloads, key=lambda w: w.arrival_time)
+    # Sort workloads by arrival time
+    sorted_workloads = sorted(workloads, key=lambda w: w.arrival_time or datetime.utcnow())
     
     assignments = []
-    unscheduled = []
     
     for workload in sorted_workloads:
-        # Filter datacenters with sufficient capacity
-        available_dcs = [
-            dc for dc in dcs 
-            if dc.can_accommodate(workload.cpu, workload.memory)
-        ]
+        # Get available DCs with capacity
+        available_dcs = [dc for dc in dcs if dc.can_accommodate(workload.cpu, workload.memory)]
         
         if not available_dcs:
-            unscheduled.append(workload.id)
             continue
         
-        # Sort by carbon intensity (ascending - lowest first)
-        available_dcs.sort(
-            key=lambda dc: carbon_data.get(dc.id, {}).get('intensity', float('inf'))
-        )
+        # KEY: Sort by carbon intensity (LOWEST first)
+        available_dcs.sort(key=lambda dc: carbon_data.get(dc.id, {}).get('intensity', 999))
         
-        # Select datacenter with lowest carbon intensity
+        # Pick the DC with LOWEST carbon
         selected_dc = available_dcs[0]
         
-        # Get carbon data for selected datacenter
+        # Get carbon info
         dc_carbon = carbon_data.get(selected_dc.id, {'intensity': 200, 'renewable': 30})
         carbon_intensity = dc_carbon.get('intensity', 200)
         renewable_pct = dc_carbon.get('renewable', 30)
         
-        # Calculate carbon emissions: energy (kWh) * intensity (gCO2/kWh)
+        # Calculate emissions
         energy_kwh = workload.energy_kwh
         carbon_emissions = energy_kwh * carbon_intensity
-        
-        # Calculate cost
         cost = workload.cpu * workload.duration * selected_dc.cost_per_core_hour
         
-        # Create assignment
         assignment = Assignment(
             workload_id=workload.id,
             datacenter_id=selected_dc.id,
-            start_time=workload.arrival_time,
-            end_time=workload.arrival_time + timedelta(hours=workload.duration),
+            start_time=workload.arrival_time or datetime.utcnow(),
+            end_time=(workload.arrival_time or datetime.utcnow()) + timedelta(hours=workload.duration),
             carbon_emissions=carbon_emissions,
             cost=cost,
             carbon_intensity=carbon_intensity,
@@ -82,16 +70,12 @@ def greedy_schedule(
         )
         
         assignments.append(assignment)
-        
-        # Update datacenter capacity
         selected_dc.allocate(workload.cpu, workload.memory)
     
-    execution_time = (time.time() - start_time) * 1000  # ms
+    execution_time = (time.time() - start_time) * 1000
     
-    schedule = Schedule(
+    return Schedule(
         assignments=assignments,
         algorithm_used='greedy',
         execution_time_ms=execution_time
     )
-    
-    return schedule

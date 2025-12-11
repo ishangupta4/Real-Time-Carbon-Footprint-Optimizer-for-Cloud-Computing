@@ -1,0 +1,24 @@
+# Flask and extensions
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# HTTP client
+requests>=2.31.0
+
+# Data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Optimization (optional - for advanced algorithms)
+pulp>=2.7.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-flask>=1.2.0
+
+# Code quality
+black>=23.0.0
+pylint>=2.17.0

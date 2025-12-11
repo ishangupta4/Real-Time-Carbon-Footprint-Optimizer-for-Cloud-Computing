@@ -113,7 +113,7 @@ function Dashboard() {
         : 0;
 
     return (
-        <Container maxWidth="xl">
+        <Container maxWidth={false}>
             {/* Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                 <Box>

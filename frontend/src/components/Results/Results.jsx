@@ -1,6 +1,6 @@
 // File: frontend/src/components/Results/Results.jsx
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
     Grid,
@@ -63,6 +63,44 @@ function Results() {
     const navigate = useNavigate();
     const { result } = location.state || {};
 
+    // Memoize schedule data transformation for timeline chart
+    const { scheduleData, uniqueDCs } = useMemo(() => {
+        if (!result?.schedule?.assignments || result.schedule.assignments.length === 0) {
+            return { scheduleData: [], uniqueDCs: [] };
+        }
+
+        const assignments = result.schedule.assignments;
+
+        // Get unique datacenters from actual assignments
+        const uniqueDCs = [...new Set(assignments.map(a => a.datacenter_id))].sort();
+
+        // Create index mapping for Y-axis
+        const dcIndexMap = {};
+        uniqueDCs.forEach((dc, index) => {
+            dcIndexMap[dc] = index;
+        });
+
+        // Transform assignments to scatter chart data
+        const scheduleData = assignments.map((a, idx) => {
+            const startTime = new Date(a.start_time);
+            const endTime = new Date(a.end_time);
+            const startHour = startTime.getHours() + startTime.getMinutes() / 60;
+
+            return {
+                x: startHour,
+                y: dcIndexMap[a.datacenter_id],
+                z: Math.max(a.carbon_emissions || 10, 10), // Minimum size for visibility
+                dc: a.datacenter_id,
+                workload: a.workload_id?.substring(0, 8) || `Task ${idx + 1}`,
+                carbon: Math.round(a.carbon_emissions || 0),
+                duration: ((endTime - startTime) / 3600000).toFixed(1),
+                cost: (a.cost || 0).toFixed(3),
+            };
+        });
+
+        return { scheduleData, uniqueDCs };
+    }, [result]);
+
     if (!result) {
         return (
             <Container maxWidth="lg">
@@ -100,26 +138,27 @@ function Results() {
         { name: 'Baseline (FCFS)', carbon: Math.round(carbonMetrics.total_carbon_baseline || 0), fill: '#ff9800' },
     ];
 
-    // Prepare schedule timeline data for scatter chart
-    const scheduleData = schedule?.assignments?.map((a, idx) => {
-        const startHour = new Date(a.start_time).getHours() + new Date(a.start_time).getMinutes() / 60;
-        const dcIndex = Object.keys(DC_COLORS).indexOf(a.datacenter_id);
-        return {
-            x: startHour,
-            y: dcIndex >= 0 ? dcIndex : 0,
-            z: a.carbon_emissions,
-            dc: a.datacenter_id,
-            workload: a.workload_id,
-            carbon: Math.round(a.carbon_emissions),
-            duration: ((new Date(a.end_time) - new Date(a.start_time)) / 3600000).toFixed(1),
-        };
-    }) || [];
-
-    // Get unique DCs for Y-axis
-    const uniqueDCs = [...new Set(schedule?.assignments?.map(a => a.datacenter_id) || [])];
+    // Custom tooltip for scatter chart
+    const ScatterTooltip = ({ active, payload }) => {
+        if (active && payload && payload.length > 0) {
+            const data = payload[0].payload;
+            return (
+                <Paper sx={{ p: 1.5, boxShadow: 2 }}>
+                    <Typography variant="subtitle2" fontWeight="bold">
+                        Task: {data.workload}
+                    </Typography>
+                    <Typography variant="body2">Datacenter: {data.dc}</Typography>
+                    <Typography variant="body2">Carbon: {data.carbon} gCO₂</Typography>
+                    <Typography variant="body2">Duration: {data.duration}h</Typography>
+                    <Typography variant="body2">Cost: ${data.cost}</Typography>
+                </Paper>
+            );
+        }
+        return null;
+    };
 
     return (
-        <Container maxWidth="xl">
+        <Container maxWidth={false}>
             {/* Header */}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                 <Box>
@@ -227,7 +266,7 @@ function Results() {
                                         <XAxis type="number" />
                                         <YAxis dataKey="name" type="category" width={120} />
                                         <Tooltip formatter={(value) => [`${value.toLocaleString()} gCO₂`, 'Carbon']} />
-                                        <Bar dataKey="carbon" radius={[0, 4, 4, 0]}>
+                                        <Bar dataKey="carbon" radius={[0, 4, 4, 0]} barSize={60}>
                                             {comparisonData.map((entry, index) => (
                                                 <Cell key={index} fill={entry.fill} />
                                             ))}
@@ -269,62 +308,89 @@ function Results() {
                 </Grid>
             </Grid>
 
-            {/* Schedule Timeline Chart */}
-            <Card sx={{ mb: 3 }}>
-                <CardContent>
-                    <Typography variant="h6" gutterBottom>Workload Schedule Timeline</Typography>
-                    <Typography variant="body2" color="text.secondary" mb={2}>
-                        Each dot represents a task. Position shows datacenter and start time. Size indicates carbon emissions.
-                    </Typography>
-                    <Box height={300}>
-                        <ResponsiveContainer width="100%" height="100%">
-                            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 100 }}>
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis
-                                    type="number"
-                                    dataKey="x"
-                                    name="Hour"
-                                    domain={[0, 24]}
-                                    label={{ value: 'Hour of Day', position: 'bottom' }}
-                                />
-                                <YAxis
-                                    type="number"
-                                    dataKey="y"
-                                    name="Datacenter"
-                                    domain={[-0.5, uniqueDCs.length - 0.5]}
-                                    ticks={uniqueDCs.map((_, i) => i)}
-                                    tickFormatter={(value) => uniqueDCs[value]?.replace('UK-', '') || ''}
-                                />
-                                <ZAxis type="number" dataKey="z" range={[50, 400]} />
-                                <Tooltip
-                                    content={({ payload }) => {
-                                        if (payload && payload[0]) {
-                                            const data = payload[0].payload;
-                                            return (
-                                                <Paper sx={{ p: 1 }}>
-                                                    <Typography variant="body2"><strong>{data.workload}</strong></Typography>
-                                                    <Typography variant="caption">DC: {data.dc}</Typography><br />
-                                                    <Typography variant="caption">Carbon: {data.carbon} gCO₂</Typography><br />
-                                                    <Typography variant="caption">Duration: {data.duration}h</Typography>
-                                                </Paper>
-                                            );
-                                        }
-                                        return null;
-                                    }}
-                                />
-                                <Scatter
-                                    data={scheduleData}
-                                    fill="#4caf50"
-                                >
-                                    {scheduleData.map((entry, index) => (
-                                        <Cell key={index} fill={DC_COLORS[entry.dc] || '#4caf50'} />
-                                    ))}
-                                </Scatter>
-                            </ScatterChart>
-                        </ResponsiveContainer>
-                    </Box>
-                </CardContent>
-            </Card>
+            {/* Schedule Timeline Chart - FIXED */}
+            {scheduleData.length > 0 && (
+                <Card sx={{ mb: 3 }}>
+                    <CardContent>
+                        <Typography variant="h6" gutterBottom>Workload Schedule Timeline</Typography>
+                        <Typography variant="body2" color="text.secondary" mb={2}>
+                            Each dot represents a task. Position shows datacenter and start time. Size indicates carbon emissions.
+                        </Typography>
+
+                        {/* Legend */}
+                        <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
+                            {uniqueDCs.map(dc => (
+                                <Box key={dc} display="flex" alignItems="center" gap={0.5}>
+                                    <Box
+                                        sx={{
+                                            width: 12,
+                                            height: 12,
+                                            borderRadius: '50%',
+                                            backgroundColor: DC_COLORS[dc] || '#4caf50'
+                                        }}
+                                    />
+                                    <Typography variant="caption">{dc.replace('UK-', '')}</Typography>
+                                </Box>
+                            ))}
+                        </Box>
+
+                        <Box height={350}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 100 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                                    <XAxis
+                                        type="number"
+                                        dataKey="x"
+                                        name="Hour"
+                                        domain={[0, 24]}
+                                        ticks={[0, 4, 8, 12, 16, 20, 24]}
+                                        tickFormatter={(value) => `${value}:00`}
+                                        label={{
+                                            value: 'Time of Day',
+                                            position: 'bottom',
+                                            offset: 20
+                                        }}
+                                    />
+                                    <YAxis
+                                        type="number"
+                                        dataKey="y"
+                                        name="Datacenter"
+                                        domain={[-0.5, Math.max(uniqueDCs.length - 0.5, 0.5)]}
+                                        ticks={uniqueDCs.map((_, i) => i)}
+                                        tickFormatter={(value) => {
+                                            const index = Math.round(value);
+                                            return uniqueDCs[index]?.replace('UK-', '') || '';
+                                        }}
+                                        label={{
+                                            value: 'Datacenter',
+                                            angle: -90,
+                                            position: 'insideLeft',
+                                            offset: -10
+                                        }}
+                                        width={80}
+                                    />
+                                    <ZAxis
+                                        type="number"
+                                        dataKey="z"
+                                        range={[50, 500]}
+                                        name="Carbon"
+                                    />
+                                    <Tooltip content={<ScatterTooltip />} />
+                                    <Scatter data={scheduleData} fill="#4caf50">
+                                        {scheduleData.map((entry, index) => (
+                                            <Cell
+                                                key={`cell-${index}`}
+                                                fill={DC_COLORS[entry.dc] || '#4caf50'}
+                                                fillOpacity={0.7}
+                                            />
+                                        ))}
+                                    </Scatter>
+                                </ScatterChart>
+                            </ResponsiveContainer>
+                        </Box>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Carbon by Datacenter Bar Chart */}
             <Card sx={{ mb: 3 }}>

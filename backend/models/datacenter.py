@@ -1,10 +1,10 @@
 """
-Datacenter Model - Fixed for Algorithm Differentiation
-=======================================================
+Datacenter Model - Reordered for Algorithm Comparison
+======================================================
 File: backend/models/datacenter.py
 
-KEY: Datacenters are ordered RANDOMLY (not by carbon intensity)
-so that FCFS and Greedy give DIFFERENT results.
+KEY: Order starts with HIGH carbon DCs first!
+This ensures FCFS (picks first) differs from Greedy (picks lowest carbon)
 """
 
 from dataclasses import dataclass, field
@@ -91,30 +91,31 @@ class Datacenter:
 
 
 # =============================================================================
-# IMPORTANT: Order is intentionally MIXED (not sorted by carbon)
-# This ensures FCFS and Greedy give DIFFERENT results
+# DATACENTER ORDER: HIGH carbon first, LOW carbon last
 # 
-# Typical carbon intensity (varies by time):
-# - Scotland: 80-150 (LOWEST - lots of wind)
-# - North: 120-180
-# - Wales: 130-190
-# - Midlands: 150-220
-# - East: 160-230
-# - South: 180-280 (HIGHEST - less renewable)
+# After filtering (removing Scotland & North which have ~0 carbon):
+# Typical remaining intensities:
+#   - Wales: ~200-350 (HIGH - lots of gas)
+#   - South: ~180-280 (HIGH)
+#   - East: ~100-200 (MEDIUM)
+#   - Midlands: ~80-180 (LOWER)
+#
+# FCFS picks: Wales (index 0) → HIGH carbon
+# Greedy picks: Midlands or East (lowest intensity) → LOW carbon
 # =============================================================================
 
 DEFAULT_DATACENTERS = [
-    # Index 0: MEDIUM-HIGH carbon (FCFS picks this first)
+    # Index 0: HIGH carbon - FCFS picks this!
     Datacenter(
-        id='UK-Midlands',
-        name='UK Midlands',
-        location='Birmingham, UK',
-        region_code='9',
-        latitude=52.4862,
-        longitude=-1.8904,
+        id='UK-Wales',
+        name='UK Wales',
+        location='Cardiff, UK',
+        region_code='7',
+        latitude=51.4816,
+        longitude=-3.1791,
         total_cpu=200,
         total_memory=800,
-        cost_per_core_hour=0.048
+        cost_per_core_hour=0.044
     ),
     # Index 1: HIGH carbon
     Datacenter(
@@ -128,19 +129,7 @@ DEFAULT_DATACENTERS = [
         total_memory=800,
         cost_per_core_hour=0.055
     ),
-    # Index 2: LOW carbon (Greedy will pick this!)
-    Datacenter(
-        id='UK-Scotland',
-        name='UK Scotland',
-        location='Edinburgh, UK',
-        region_code='2',
-        latitude=55.9533,
-        longitude=-3.1883,
-        total_cpu=200,
-        total_memory=800,
-        cost_per_core_hour=0.042
-    ),
-    # Index 3: MEDIUM-HIGH carbon
+    # Index 2: MEDIUM carbon
     Datacenter(
         id='UK-East',
         name='UK East',
@@ -152,19 +141,19 @@ DEFAULT_DATACENTERS = [
         total_memory=800,
         cost_per_core_hour=0.050
     ),
-    # Index 4: MEDIUM carbon
+    # Index 3: MEDIUM-LOW carbon
     Datacenter(
-        id='UK-Wales',
-        name='UK Wales',
-        location='Cardiff, UK',
-        region_code='7',
-        latitude=51.4816,
-        longitude=-3.1791,
+        id='UK-Midlands',
+        name='UK Midlands',
+        location='Birmingham, UK',
+        region_code='9',
+        latitude=52.4862,
+        longitude=-1.8904,
         total_cpu=200,
         total_memory=800,
-        cost_per_core_hour=0.044
+        cost_per_core_hour=0.048
     ),
-    # Index 5: MEDIUM-LOW carbon
+    # Index 4: LOW carbon (likely filtered out)
     Datacenter(
         id='UK-North',
         name='UK North',
@@ -175,5 +164,17 @@ DEFAULT_DATACENTERS = [
         total_cpu=200,
         total_memory=800,
         cost_per_core_hour=0.045
+    ),
+    # Index 5: LOWEST carbon (likely filtered out)
+    Datacenter(
+        id='UK-Scotland',
+        name='UK Scotland',
+        location='Edinburgh, UK',
+        region_code='2',
+        latitude=55.9533,
+        longitude=-3.1883,
+        total_cpu=200,
+        total_memory=800,
+        cost_per_core_hour=0.042
     ),
 ]

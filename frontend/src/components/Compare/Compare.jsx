@@ -118,7 +118,7 @@ function Compare() {
     };
 
     return (
-        <Container maxWidth="xl">
+        <Container maxWidth={false}>
             {/* Header */}
             <Typography variant="h4" gutterBottom>Algorithm Comparison</Typography>
             <Typography variant="body2" color="text.secondary" mb={3}>
@@ -321,41 +321,150 @@ function Compare() {
                     </Grid>
 
                     {/* Distribution Comparison */}
+                    {/* Distribution Comparison - Fixed with clear separation */}
                     <Card>
                         <CardContent>
-                            <Typography variant="h6" gutterBottom>Datacenter Distribution by Algorithm</Typography>
-                            <Typography variant="body2" color="text.secondary" mb={2}>
+                            <Typography variant="h6" gutterBottom>
+                                Datacenter Distribution by Algorithm
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" mb={3}>
                                 Shows how each algorithm distributes tasks across datacenters
                             </Typography>
+
+                            {/* Legend - Shared across all charts */}
+                            <Box display="flex" justifyContent="center" flexWrap="wrap" gap={2} mb={3}>
+                                {Object.entries(DC_COLORS).map(([dc, color]) => (
+                                    <Box key={dc} display="flex" alignItems="center" gap={0.5}>
+                                        <Box
+                                            sx={{
+                                                width: 14,
+                                                height: 14,
+                                                borderRadius: '50%',
+                                                backgroundColor: color,
+                                                border: '1px solid #ddd'
+                                            }}
+                                        />
+                                        <Typography variant="caption" fontWeight="medium">
+                                            {dc.replace('UK-', '')}
+                                        </Typography>
+                                    </Box>
+                                ))}
+                            </Box>
+
+                            {/* Three separate charts in individual bordered boxes */}
                             <Grid container spacing={3}>
                                 {selectedAlgorithms.map((algo) => {
                                     const distData = getDistributionData(algo);
                                     const algoInfo = allAlgorithms.find(a => a.value === algo);
+                                    const totalTasks = distData.reduce((sum, d) => sum + d.count, 0);
+
                                     return (
                                         <Grid item xs={12} md={4} key={algo}>
-                                            <Box textAlign="center" mb={1}>
-                                                <Chip label={algoInfo?.label} sx={{ bgcolor: algoInfo?.color, color: 'white' }} />
-                                            </Box>
-                                            <Box height={250}>
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <PieChart>
-                                                        <Pie
-                                                            data={distData}
-                                                            dataKey="count"
-                                                            nameKey="name"
-                                                            cx="50%"
-                                                            cy="50%"
-                                                            outerRadius={80}
-                                                            label={({ name, count }) => `${name}: ${count}`}
-                                                        >
-                                                            {distData.map((entry, index) => (
-                                                                <Cell key={index} fill={DC_COLORS[entry.fullName] || '#888'} />
-                                                            ))}
-                                                        </Pie>
-                                                        <Tooltip />
-                                                    </PieChart>
-                                                </ResponsiveContainer>
-                                            </Box>
+                                            <Paper
+                                                elevation={2}
+                                                sx={{
+                                                    p: 2,
+                                                    height: '100%',
+                                                    border: '2px solid',
+                                                    borderColor: algoInfo?.color || 'grey.300',
+                                                    borderRadius: 2,
+                                                    backgroundColor: 'background.paper'
+                                                }}
+                                            >
+                                                {/* Algorithm Header */}
+                                                <Box textAlign="center" mb={2}>
+                                                    <Chip
+                                                        label={algoInfo?.label}
+                                                        sx={{
+                                                            bgcolor: algoInfo?.color,
+                                                            color: 'white',
+                                                            fontWeight: 'bold',
+                                                            fontSize: '0.9rem',
+                                                            px: 2,
+                                                            py: 0.5
+                                                        }}
+                                                    />
+                                                    <Typography variant="caption" display="block" color="text.secondary" mt={1}>
+                                                        {totalTasks} tasks scheduled
+                                                    </Typography>
+                                                </Box>
+
+                                                {/* Pie Chart */}
+                                                <Box height={220}>
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <PieChart>
+                                                            <Pie
+                                                                data={distData}
+                                                                dataKey="count"
+                                                                nameKey="name"
+                                                                cx="50%"
+                                                                cy="50%"
+                                                                innerRadius={40}
+                                                                outerRadius={80}
+                                                                paddingAngle={2}
+                                                                label={({ name, percent }) =>
+                                                                    percent > 0.05 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''
+                                                                }
+                                                                labelLine={true}
+                                                            >
+                                                                {distData.map((entry, index) => (
+                                                                    <Cell
+                                                                        key={index}
+                                                                        fill={DC_COLORS[entry.fullName] || '#888'}
+                                                                        stroke="#fff"
+                                                                        strokeWidth={2}
+                                                                    />
+                                                                ))}
+                                                            </Pie>
+                                                            <Tooltip
+                                                                formatter={(value, name) => [`${value} tasks`, name]}
+                                                                contentStyle={{
+                                                                    backgroundColor: 'rgba(255,255,255,0.95)',
+                                                                    borderRadius: 8,
+                                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                                                                }}
+                                                            />
+                                                        </PieChart>
+                                                    </ResponsiveContainer>
+                                                </Box>
+
+                                                {/* Distribution breakdown list */}
+                                                <Box mt={2}>
+                                                    {distData
+                                                        .sort((a, b) => b.count - a.count)
+                                                        .map((entry, idx) => (
+                                                            <Box
+                                                                key={idx}
+                                                                display="flex"
+                                                                justifyContent="space-between"
+                                                                alignItems="center"
+                                                                py={0.5}
+                                                                px={1}
+                                                                sx={{
+                                                                    borderRadius: 1,
+                                                                    '&:hover': { bgcolor: 'action.hover' }
+                                                                }}
+                                                            >
+                                                                <Box display="flex" alignItems="center" gap={1}>
+                                                                    <Box
+                                                                        sx={{
+                                                                            width: 10,
+                                                                            height: 10,
+                                                                            borderRadius: '50%',
+                                                                            bgcolor: DC_COLORS[entry.fullName] || '#888'
+                                                                        }}
+                                                                    />
+                                                                    <Typography variant="body2">
+                                                                        {entry.name}
+                                                                    </Typography>
+                                                                </Box>
+                                                                <Typography variant="body2" fontWeight="medium">
+                                                                    {entry.count} ({((entry.count / totalTasks) * 100).toFixed(0)}%)
+                                                                </Typography>
+                                                            </Box>
+                                                        ))}
+                                                </Box>
+                                            </Paper>
                                         </Grid>
                                     );
                                 })}

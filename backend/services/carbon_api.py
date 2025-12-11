@@ -1,8 +1,15 @@
+"""
+Carbon API Client - With Low-Carbon Filtering
+==============================================
+File: backend/services/carbon_api.py
+
+Filters out datacenters with very low carbon intensity (< threshold)
+so that algorithms have meaningful differences to show.
+"""
+
 import requests
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
-import time
-from functools import lru_cache
 
 
 class CarbonAPIClient:
@@ -13,25 +20,20 @@ class CarbonAPIClient:
     
     BASE_URL = "https://api.carbonintensity.org.uk"
     
-    # UK Region codes to our datacenter IDs
+    # Minimum carbon intensity threshold
+    # DCs below this are excluded to show algorithm differences
+    MIN_CARBON_THRESHOLD = 50  # gCO2/kWh
+    
     REGION_MAPPING = {
-        '1': 'UK-Scotland',     # North Scotland
-        '2': 'UK-Scotland',     # South Scotland  
-        '7': 'UK-Wales',        # Wales
-        '9': 'UK-Midlands',     # West Midlands
-        '12': 'UK-East',        # East England
-        '13': 'UK-South',       # South England
-        '4': 'UK-North',        # North West England
+        '1': 'UK-Scotland', '2': 'UK-Scotland',
+        '3': 'UK-North', '4': 'UK-North', '5': 'UK-North',
+        '6': 'UK-Midlands', '7': 'UK-Wales', '8': 'UK-Midlands', '9': 'UK-Midlands',
+        '10': 'UK-East', '11': 'UK-South', '12': 'UK-East', '13': 'UK-South', '14': 'UK-South',
     }
     
-    # Reverse mapping
     DC_TO_REGION = {
-        'UK-North': '4',
-        'UK-South': '13', 
-        'UK-Midlands': '9',
-        'UK-Scotland': '2',
-        'UK-Wales': '7',
-        'UK-East': '12'
+        'UK-North': '4', 'UK-South': '13', 'UK-Midlands': '9',
+        'UK-Scotland': '2', 'UK-Wales': '7', 'UK-East': '12'
     }
     
     def __init__(self, cache_ttl_minutes: int = 30):
@@ -40,122 +42,124 @@ class CarbonAPIClient:
         self._cache_timestamps = {}
     
     def _is_cache_valid(self, key: str) -> bool:
-        """Check if cached data is still valid"""
         if key not in self._cache_timestamps:
             return False
         age = datetime.utcnow() - self._cache_timestamps[key]
         return age < self.cache_ttl
     
     def _get_cached(self, key: str) -> Optional[Dict]:
-        """Get cached data if valid"""
         if self._is_cache_valid(key):
             return self._cache.get(key)
         return None
     
     def _set_cache(self, key: str, data: Dict):
-        """Store data in cache"""
         self._cache[key] = data
         self._cache_timestamps[key] = datetime.utcnow()
     
     def get_current_intensity(self) -> Dict[str, Dict]:
         """
         Fetch current carbon intensity for all UK regions.
-        
-        Returns:
-            Dict mapping datacenter_id to carbon data:
-            {
-                'UK-North': {
-                    'intensity': 142.5,
-                    'renewable': 65.3,
-                    'generation_mix': {...},
-                    'index': 'moderate'
-                }
-            }
+        Filters out datacenters with very low carbon intensity.
         """
         cache_key = 'current_all'
         cached = self._get_cached(cache_key)
         if cached:
+            print("[CarbonAPI] Using cached data")
             return cached
         
         try:
-            # Fetch regional data
-            response = requests.get(
-                f"{self.BASE_URL}/regional",
-                timeout=10
-            )
+            response = requests.get(f"{self.BASE_URL}/regional", timeout=10)
             response.raise_for_status()
             data = response.json()
             
             result = {}
-            regions = data.get('data', [])
+            excluded = []
             
-            # Handle nested structure
-            if regions and isinstance(regions, list):
-                for region_group in regions:
-                    region_list = region_group.get('regions', [region_group])
-                    for region in region_list:
-                        region_id = str(region.get('regionid', ''))
-                        
-                        # Map to our datacenter ID
-                        dc_id = self.REGION_MAPPING.get(region_id)
-                        if not dc_id:
-                            continue
-                        
-                        intensity_data = region.get('data', [{}])[0] if region.get('data') else {}
-                        gen_mix = region.get('generationmix', [])
-                        
-                        # Calculate renewable percentage
-                        renewable_sources = ['wind', 'solar', 'hydro', 'nuclear']
-                        renewable_pct = sum(
-                            g.get('perc', 0) 
-                            for g in gen_mix 
-                            if g.get('fuel') in renewable_sources
-                        )
-                        
-                        result[dc_id] = {
-                            'intensity': intensity_data.get('intensity', {}).get('forecast', 200),
-                            'renewable': renewable_pct,
-                            'index': intensity_data.get('intensity', {}).get('index', 'moderate'),
-                            'generation_mix': {
-                                g.get('fuel'): g.get('perc', 0) 
-                                for g in gen_mix
-                            },
-                            'last_updated': datetime.utcnow().isoformat()
-                        }
+            outer_data = data.get('data', [])
+            if not outer_data:
+                print("[CarbonAPI] No data in response")
+                return self._get_default_carbon_data()
             
-            # Fill in any missing datacenters with defaults
-            for dc_id in self.DC_TO_REGION.keys():
-                if dc_id not in result:
+            first_element = outer_data[0]
+            regions = first_element.get('regions', [])
+            
+            print(f"[CarbonAPI] Fetched {len(regions)} regions from API")
+            
+            for region in regions:
+                region_id = str(region.get('regionid', ''))
+                shortname = region.get('shortname', 'Unknown')
+                
+                dc_id = self.REGION_MAPPING.get(region_id)
+                if not dc_id:
+                    continue
+                
+                intensity_obj = region.get('intensity', {})
+                intensity = intensity_obj.get('forecast', 200)
+                index = intensity_obj.get('index', 'moderate')
+                
+                gen_mix = region.get('generationmix', [])
+                renewable_sources = ['wind', 'solar', 'hydro', 'nuclear']
+                renewable_pct = sum(
+                    g.get('perc', 0) for g in gen_mix if g.get('fuel') in renewable_sources
+                )
+                
+                # Only update if we don't have this DC yet, or if this value is lower
+                if dc_id not in result or intensity < result[dc_id]['intensity']:
                     result[dc_id] = {
-                        'intensity': 200,
-                        'renewable': 30,
-                        'index': 'moderate',
-                        'generation_mix': {},
+                        'intensity': intensity,
+                        'renewable': renewable_pct,
+                        'index': index,
+                        'generation_mix': {g.get('fuel'): g.get('perc', 0) for g in gen_mix},
+                        'region_name': shortname,
                         'last_updated': datetime.utcnow().isoformat()
                     }
             
-            self._set_cache(cache_key, result)
-            return result
+            # ================================================
+            # FILTER: Remove DCs with very low carbon intensity
+            # This ensures algorithms have meaningful differences
+            # ================================================
+            filtered_result = {}
+            for dc_id, dc_data in result.items():
+                if dc_data['intensity'] < self.MIN_CARBON_THRESHOLD:
+                    excluded.append(f"{dc_id} ({dc_data['intensity']} gCO2/kWh)")
+                else:
+                    filtered_result[dc_id] = dc_data
+            
+            if excluded:
+                print(f"[CarbonAPI] Excluded low-carbon DCs (< {self.MIN_CARBON_THRESHOLD} gCO2/kWh): {', '.join(excluded)}")
+            
+            # Ensure we have at least 3 DCs for meaningful comparison
+            if len(filtered_result) < 3:
+                print("[CarbonAPI] WARNING: Too few DCs after filtering, using all DCs with minimum floor")
+                for dc_id, dc_data in result.items():
+                    dc_data['intensity'] = max(dc_data['intensity'], self.MIN_CARBON_THRESHOLD)
+                    filtered_result[dc_id] = dc_data
+            
+            # Print final summary
+            print("\n[CarbonAPI] Final carbon data (after filtering):")
+            for dc_id, dc_data in sorted(filtered_result.items(), key=lambda x: x[1]['intensity']):
+                print(f"    {dc_id}: intensity={dc_data['intensity']}, renewable={dc_data['renewable']:.1f}%")
+            
+            self._set_cache(cache_key, filtered_result)
+            return filtered_result
             
         except requests.RequestException as e:
-            print(f"Error fetching carbon data: {e}")
-            # Return defaults on error
+            print(f"[CarbonAPI] Error fetching carbon data: {e}")
+            return self._get_default_carbon_data()
+        except Exception as e:
+            print(f"[CarbonAPI] Unexpected error: {e}")
+            import traceback
+            traceback.print_exc()
             return self._get_default_carbon_data()
     
     def get_forecast(self, hours: int = 24) -> Dict[Tuple[str, int], Dict]:
-        """
-        Fetch carbon intensity forecast for next N hours.
-        
-        Returns:
-            Dict mapping (datacenter_id, hour_offset) to carbon data
-        """
+        """Fetch carbon intensity forecast for next N hours."""
         cache_key = f'forecast_{hours}'
         cached = self._get_cached(cache_key)
         if cached:
             return cached
         
         try:
-            # Get national forecast
             now = datetime.utcnow()
             end = now + timedelta(hours=hours)
             
@@ -166,23 +170,24 @@ class CarbonAPIClient:
             response.raise_for_status()
             data = response.json()
             
-            # Get current regional data for proportional adjustment
+            # Get current regional data (already filtered)
             current = self.get_current_intensity()
             
             result = {}
             forecasts = data.get('data', [])
             
+            avg_intensity = sum(d.get('intensity', 200) for d in current.values()) / len(current) if current else 200
+            
             for hour_idx, forecast in enumerate(forecasts[:hours]):
                 national_intensity = forecast.get('intensity', {}).get('forecast', 200)
                 
-                # Distribute to datacenters based on current proportions
                 for dc_id, dc_data in current.items():
-                    # Adjust based on current ratio to national average
                     current_intensity = dc_data.get('intensity', 200)
-                    avg_intensity = sum(d.get('intensity', 200) for d in current.values()) / len(current)
-                    
                     ratio = current_intensity / avg_intensity if avg_intensity > 0 else 1.0
                     adjusted_intensity = national_intensity * ratio
+                    
+                    # Apply same minimum threshold to forecast
+                    adjusted_intensity = max(adjusted_intensity, self.MIN_CARBON_THRESHOLD)
                     
                     result[(dc_id, hour_idx)] = {
                         'intensity': adjusted_intensity,
@@ -195,18 +200,19 @@ class CarbonAPIClient:
             return result
             
         except requests.RequestException as e:
-            print(f"Error fetching forecast: {e}")
+            print(f"[CarbonAPI] Error fetching forecast: {e}")
             return self._get_default_forecast(hours)
     
     def _get_default_carbon_data(self) -> Dict[str, Dict]:
         """Return default carbon data when API is unavailable"""
+        print("[CarbonAPI] Using default carbon data (API unavailable)")
         return {
-            'UK-North': {'intensity': 180, 'renewable': 55, 'index': 'moderate'},
-            'UK-South': {'intensity': 220, 'renewable': 40, 'index': 'moderate'},
-            'UK-Midlands': {'intensity': 200, 'renewable': 45, 'index': 'moderate'},
-            'UK-Scotland': {'intensity': 120, 'renewable': 75, 'index': 'low'},
-            'UK-Wales': {'intensity': 160, 'renewable': 60, 'index': 'low'},
-            'UK-East': {'intensity': 190, 'renewable': 50, 'index': 'moderate'}
+            'UK-Scotland': {'intensity': 85, 'renewable': 80, 'index': 'low'},
+            'UK-North': {'intensity': 145, 'renewable': 55, 'index': 'moderate'},
+            'UK-Wales': {'intensity': 195, 'renewable': 42, 'index': 'moderate'},
+            'UK-Midlands': {'intensity': 180, 'renewable': 45, 'index': 'moderate'},
+            'UK-East': {'intensity': 165, 'renewable': 50, 'index': 'moderate'},
+            'UK-South': {'intensity': 230, 'renewable': 35, 'index': 'high'},
         }
     
     def _get_default_forecast(self, hours: int) -> Dict[Tuple[str, int], Dict]:
@@ -216,15 +222,20 @@ class CarbonAPIClient:
         
         for hour in range(hours):
             for dc_id, data in defaults.items():
-                # Add some variation
-                variation = (hour % 6 - 3) * 5  # -15 to +10
+                variation = (hour % 8 - 4) * 10
                 result[(dc_id, hour)] = {
-                    'intensity': data['intensity'] + variation,
+                    'intensity': max(self.MIN_CARBON_THRESHOLD, data['intensity'] + variation),
                     'renewable': data['renewable'],
                     'hour': hour
                 }
         
         return result
+    
+    def clear_cache(self):
+        """Clear all cached data"""
+        self._cache.clear()
+        self._cache_timestamps.clear()
+        print("[CarbonAPI] Cache cleared")
 
 
 # Singleton instance

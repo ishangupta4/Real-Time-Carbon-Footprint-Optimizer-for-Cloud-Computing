@@ -9,7 +9,7 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
-    timeout: 30000, // 30 second timeout
+    timeout: 30000,
 });
 
 // Response interceptor for error handling
@@ -28,7 +28,7 @@ export const carbonAPI = {
         return response.data;
     },
 
-    // Get current carbon intensity for all datacenters
+    // Get current carbon intensity
     getCarbonIntensity: async (includeForecast = false) => {
         const response = await api.get('/carbon-intensity', {
             params: { include_forecast: includeForecast }
@@ -47,12 +47,6 @@ export const carbonAPI = {
     // Get all datacenters
     getDatacenters: async () => {
         const response = await api.get('/datacenters');
-        return response.data;
-    },
-
-    // Get specific datacenter
-    getDatacenter: async (dcId) => {
-        const response = await api.get(`/datacenters/${dcId}`);
         return response.data;
     },
 
@@ -83,7 +77,31 @@ export const carbonAPI = {
             algorithms
         });
         return response.data;
-    }
+    },
+
+    // NEW: Upload and parse workloads file
+    uploadWorkloads: async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await axios.post(`${API_BASE_URL}/upload/parse`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+            timeout: 30000,
+        });
+        return response.data;
+    },
+
+    // NEW: Download CSV template
+    downloadCSVTemplate: () => {
+        window.open(`${API_BASE_URL}/upload/template/csv`, '_blank');
+    },
+
+    // NEW: Download JSON template
+    downloadJSONTemplate: () => {
+        window.open(`${API_BASE_URL}/upload/template/json`, '_blank');
+    },
 };
 
 export default carbonAPI;

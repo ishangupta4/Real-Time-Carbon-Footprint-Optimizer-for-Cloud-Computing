@@ -1,5 +1,3 @@
-# File: backend/app.py
-
 from flask import Flask, jsonify
 from flask_cors import CORS
 from datetime import datetime
@@ -17,7 +15,8 @@ from routes.carbon import carbon_bp
 from routes.datacenters import datacenters_bp
 from routes.simulate import simulate_bp
 from routes.compare import compare_bp
-from routes.upload import upload_bp  # NEW: Upload route
+from routes.upload import upload_bp  
+
 
 # Register blueprints
 app.register_blueprint(optimize_bp, url_prefix='/api')
@@ -25,7 +24,7 @@ app.register_blueprint(carbon_bp, url_prefix='/api')
 app.register_blueprint(datacenters_bp, url_prefix='/api')
 app.register_blueprint(simulate_bp, url_prefix='/api')
 app.register_blueprint(compare_bp, url_prefix='/api')
-app.register_blueprint(upload_bp, url_prefix='/api')  # NEW
+app.register_blueprint(upload_bp, url_prefix='/api')  
 
 
 @app.route('/api/health', methods=['GET'])

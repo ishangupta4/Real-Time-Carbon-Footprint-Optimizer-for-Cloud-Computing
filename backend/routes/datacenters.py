@@ -26,15 +26,15 @@ def get_datacenters():
     }
     """
     try:
-        # Get current carbon data
+        
         carbon_data = carbon_client.get_current_intensity()
         
-        # Update datacenters with carbon data
+        
         datacenters = []
         for dc in DEFAULT_DATACENTERS:
             dc_dict = dc.to_dict()
             
-            # Merge carbon data
+            
             if dc.id in carbon_data:
                 dc_dict['carbon'] = {
                     'intensity': carbon_data[dc.id].get('intensity', 200),

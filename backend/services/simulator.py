@@ -7,15 +7,15 @@ from models.workload import Workload
 class WorkloadSimulator:
     """Generate simulated workloads for testing"""
     
-    # CPU distribution parameters
+    
     CPU_OPTIONS = [0.5, 1, 2, 4, 8, 16]
     CPU_WEIGHTS = [0.2, 0.3, 0.25, 0.15, 0.07, 0.03]
     
-    # Memory distribution (GB)
+    
     MEMORY_OPTIONS = [0.5, 1, 2, 4, 8, 16, 32]
     MEMORY_WEIGHTS = [0.1, 0.2, 0.25, 0.2, 0.15, 0.07, 0.03]
     
-    # Duration distribution (hours)
+    
     DURATION_MIN = 0.25
     DURATION_MAX = 8.0
     DURATION_MEAN = 2.0
@@ -44,10 +44,10 @@ class WorkloadSimulator:
         workloads = []
         
         for i in range(count):
-            # Random CPU
+            
             cpu = random.choices(cls.CPU_OPTIONS, weights=cls.CPU_WEIGHTS)[0]
             
-            # Random memory (correlated with CPU)
+            
             memory_idx = min(
                 cls.CPU_OPTIONS.index(cpu) + random.randint(-1, 1),
                 len(cls.MEMORY_OPTIONS) - 1
@@ -55,7 +55,7 @@ class WorkloadSimulator:
             memory_idx = max(0, memory_idx)
             memory = cls.MEMORY_OPTIONS[memory_idx]
             
-            # Random duration (log-normal distribution)
+            
             duration = max(
                 cls.DURATION_MIN,
                 min(
@@ -64,17 +64,17 @@ class WorkloadSimulator:
                 )
             )
             
-            # Random arrival time
+            
             arrival_offset = random.uniform(0, time_span_hours)
             arrival_time = start_time + timedelta(hours=arrival_offset)
             
-            # Random priority
+            
             priority = random.choices(
                 range(1, 11),
-                weights=[1, 2, 3, 5, 8, 10, 8, 5, 3, 2]  # Normal-ish
+                weights=[1, 2, 3, 5, 8, 10, 8, 5, 3, 2]  
             )[0]
             
-            # Deadline: arrival + duration + buffer
+            
             buffer = random.uniform(1, 12)
             deadline = arrival_time + timedelta(hours=duration + buffer)
             
@@ -106,5 +106,5 @@ class WorkloadSimulator:
         )
 
 
-# Singleton instance
+
 workload_simulator = WorkloadSimulator()

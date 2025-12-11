@@ -1,4 +1,4 @@
-// File: frontend/src/components/Dashboard/Dashboard.jsx
+
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -114,7 +114,7 @@ function Dashboard() {
 
     return (
         <Container maxWidth={false}>
-            {/* Header */}
+            {}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                 <Box>
                     <Typography variant="h4" gutterBottom>Carbon Intensity Dashboard</Typography>
@@ -141,7 +141,7 @@ function Dashboard() {
 
             {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-            {/* Stats Cards */}
+            {}
             <Grid container spacing={2} mb={3}>
                 <Grid item xs={12} sm={6} md={3}>
                     <Card sx={{ height: '100%', borderTop: 4, borderColor: 'success.main' }}>
@@ -203,7 +203,7 @@ function Dashboard() {
                 </Grid>
             </Grid>
 
-            {/* Main Charts */}
+            {}
             <Grid container spacing={3} mb={3}>
                 <Grid item xs={12} lg={8}>
                     <Card sx={{ height: 450 }}>
@@ -292,7 +292,7 @@ function Dashboard() {
                 </Grid>
             </Grid>
 
-            {/* Quick Actions */}
+            {}
             <Card>
                 <CardContent>
                     <Typography variant="h6" gutterBottom>Quick Actions</Typography>

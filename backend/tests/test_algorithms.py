@@ -6,7 +6,7 @@ sys.path.insert(0, '..')
 from models.workload import Workload
 from models.datacenter import Datacenter, DEFAULT_DATACENTERS
 from algorithms.greedy import greedy_schedule
-from algorithms.baseline import fcfs_schedule, round_robin_schedule
+from algorithms.baseline import fcfs_schedule
 
 
 @pytest.fixture
@@ -62,12 +62,12 @@ class TestWorkloadModel:
         assert w.cpu == 4
         assert w.memory == 8
         assert w.duration == 2
-        assert w.priority == 5  # Default
+        assert w.priority == 5  
     
     def test_workload_energy_calculation(self):
         """Test energy consumption calculation"""
         w = Workload(cpu=4, memory=8, duration=2)
-        # 4 cores * 0.1 kW/core * 2 hours = 0.8 kWh
+        
         assert w.energy_kwh == 0.8
     
     def test_workload_validation(self):
@@ -76,7 +76,7 @@ class TestWorkloadModel:
             Workload(cpu=-1, memory=8, duration=2)
         
         with pytest.raises(ValueError):
-            Workload(cpu=4, memory=8, duration=200)  # > 168 hours
+            Workload(cpu=4, memory=8, duration=200)  
     
     def test_workload_serialization(self):
         """Test to_dict and from_dict"""
@@ -97,7 +97,7 @@ class TestDatacenterModel:
     
     def test_datacenter_capacity(self, sample_datacenters):
         """Test capacity checking"""
-        dc = sample_datacenters[0]  # 100 CPU, 400 memory
+        dc = sample_datacenters[0]  
         
         assert dc.can_accommodate(50, 200) is True
         assert dc.can_accommodate(150, 200) is False
@@ -112,7 +112,7 @@ class TestDatacenterModel:
         assert dc.available_cpu == 50
         assert dc.available_memory == 200
         
-        assert dc.allocate(60, 100) is False  # Not enough CPU
+        assert dc.allocate(60, 100) is False  
     
     def test_datacenter_utilization(self, sample_datacenters):
         """Test utilization calculation"""
@@ -141,22 +141,22 @@ class TestGreedyAlgorithm:
     def test_greedy_prefers_low_carbon(self, sample_workloads, sample_datacenters, carbon_data):
         """Test that greedy prefers low carbon datacenters"""
         schedule = greedy_schedule(
-            sample_workloads[:1],  # Just one workload
+            sample_workloads[:1],  
             sample_datacenters, 
             carbon_data
         )
         
-        # Should assign to DC-Low (lowest carbon intensity)
+        
         assert schedule.assignments[0].datacenter_id == 'DC-Low'
     
     def test_greedy_carbon_calculation(self, sample_datacenters, carbon_data):
         """Test carbon emission calculation"""
-        workloads = [Workload(cpu=4, memory=8, duration=2)]  # 0.8 kWh
+        workloads = [Workload(cpu=4, memory=8, duration=2)]  
         
         schedule = greedy_schedule(workloads, sample_datacenters, carbon_data)
         
-        # Assigned to DC-Low with intensity 100 gCO2/kWh
-        # Expected: 0.8 kWh * 100 gCO2/kWh = 80 gCO2
+        
+        
         assert schedule.assignments[0].carbon_emissions == 80.0
 
 
@@ -174,19 +174,7 @@ class TestBaselineAlgorithms:
         assert len(schedule.assignments) == len(sample_workloads)
         assert schedule.algorithm_used == 'fcfs'
     
-    def test_round_robin_distributes(self, sample_datacenters, carbon_data):
-        """Test round robin distributes across DCs"""
-        workloads = [Workload(cpu=1, memory=2, duration=1) for _ in range(6)]
-        
-        schedule = round_robin_schedule(workloads, sample_datacenters, carbon_data)
-        
-        # Should distribute 2 to each DC (6 workloads, 3 DCs)
-        dc_counts = {}
-        for a in schedule.assignments:
-            dc_counts[a.datacenter_id] = dc_counts.get(a.datacenter_id, 0) + 1
-        
-        # Each DC should have at least 1 assignment
-        assert len(dc_counts) == 3
+
 
 
 class TestAlgorithmComparison:
@@ -206,5 +194,5 @@ class TestAlgorithmComparison:
             carbon_data
         )
         
-        # Greedy should have lower or equal carbon
+        
         assert greedy_schedule_result.total_carbon <= fcfs_schedule_result.total_carbon

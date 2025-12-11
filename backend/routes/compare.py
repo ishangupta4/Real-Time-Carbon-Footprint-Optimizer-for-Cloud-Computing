@@ -35,7 +35,7 @@ def compare_algorithms():
                 'error': 'Missing workloads in request'
             }), 400
         
-        # Parse workloads
+        
         workloads = []
         for w_data in data['workloads']:
             try:

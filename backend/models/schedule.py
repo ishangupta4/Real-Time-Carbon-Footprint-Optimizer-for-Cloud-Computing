@@ -10,9 +10,9 @@ class Assignment:
     datacenter_id: str
     start_time: datetime
     end_time: datetime
-    carbon_emissions: float  # gCO2
-    cost: float  # $
-    carbon_intensity: float  # gCO2/kWh at time of assignment
+    carbon_emissions: float  
+    cost: float  
+    carbon_intensity: float  
     renewable_percentage: float
     
     def to_dict(self) -> dict:

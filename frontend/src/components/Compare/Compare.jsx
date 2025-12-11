@@ -1,4 +1,4 @@
-// File: frontend/src/components/Compare/Compare.jsx
+
 
 import React, { useState } from 'react';
 import {
@@ -92,7 +92,7 @@ function Compare() {
         }
     };
 
-    // Prepare chart data
+    
     const chartData = results
         ? Object.entries(results.results)
             .map(([algo, data]) => ({
@@ -107,7 +107,7 @@ function Compare() {
             .sort((a, b) => a.carbon - b.carbon)
         : [];
 
-    // Prepare distribution comparison
+    
     const getDistributionData = (algo) => {
         if (!results?.results?.[algo]?.distribution) return [];
         return Object.entries(results.results[algo].distribution).map(([dc, count]) => ({
@@ -119,7 +119,7 @@ function Compare() {
 
     return (
         <Container maxWidth={false}>
-            {/* Header */}
+            {}
             <Typography variant="h4" gutterBottom>Algorithm Comparison</Typography>
             <Typography variant="body2" color="text.secondary" mb={3}>
                 Compare scheduling algorithms on the same workload to see which minimizes carbon emissions
@@ -129,7 +129,7 @@ function Compare() {
                 <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>{error}</Alert>
             )}
 
-            {/* Configuration */}
+            {}
             <Card sx={{ mb: 3 }}>
                 <CardContent>
                     <Grid container spacing={3} alignItems="center">
@@ -189,10 +189,10 @@ function Compare() {
                 </CardContent>
             </Card>
 
-            {/* Results */}
+            {}
             {results && (
                 <>
-                    {/* Winner Banner */}
+                    {}
                     <Alert severity="success" icon={<TrophyIcon />} sx={{ mb: 3 }}>
                         <Typography variant="subtitle1" fontWeight="bold">
                             Best Algorithm: {allAlgorithms.find(a => a.value === results.best_algorithm)?.label}
@@ -202,7 +202,7 @@ function Compare() {
                         </Typography>
                     </Alert>
 
-                    {/* Results Table */}
+                    {}
                     <Card sx={{ mb: 3 }}>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>Comparison Results</Typography>
@@ -269,9 +269,9 @@ function Compare() {
                         </CardContent>
                     </Card>
 
-                    {/* Charts */}
+                    {}
                     <Grid container spacing={3} mb={3}>
-                        {/* Carbon Comparison Bar Chart */}
+                        {}
                         <Grid item xs={12} md={6}>
                             <Card sx={{ height: 400 }}>
                                 <CardContent sx={{ height: '100%' }}>
@@ -295,7 +295,7 @@ function Compare() {
                             </Card>
                         </Grid>
 
-                        {/* Execution Time Chart */}
+                        {}
                         <Grid item xs={12} md={6}>
                             <Card sx={{ height: 400 }}>
                                 <CardContent sx={{ height: '100%' }}>
@@ -320,8 +320,8 @@ function Compare() {
                         </Grid>
                     </Grid>
 
-                    {/* Distribution Comparison */}
-                    {/* Distribution Comparison - Fixed with clear separation */}
+                    {}
+                    {}
                     <Card>
                         <CardContent>
                             <Typography variant="h6" gutterBottom>
@@ -331,7 +331,7 @@ function Compare() {
                                 Shows how each algorithm distributes tasks across datacenters
                             </Typography>
 
-                            {/* Legend - Shared across all charts */}
+                            {}
                             <Box display="flex" justifyContent="center" flexWrap="wrap" gap={2} mb={3}>
                                 {Object.entries(DC_COLORS).map(([dc, color]) => (
                                     <Box key={dc} display="flex" alignItems="center" gap={0.5}>
@@ -351,7 +351,7 @@ function Compare() {
                                 ))}
                             </Box>
 
-                            {/* Three separate charts in individual bordered boxes */}
+                            {}
                             <Grid container spacing={3}>
                                 {selectedAlgorithms.map((algo) => {
                                     const distData = getDistributionData(algo);
@@ -371,7 +371,7 @@ function Compare() {
                                                     backgroundColor: 'background.paper'
                                                 }}
                                             >
-                                                {/* Algorithm Header */}
+                                                {}
                                                 <Box textAlign="center" mb={2}>
                                                     <Chip
                                                         label={algoInfo?.label}
@@ -389,7 +389,7 @@ function Compare() {
                                                     </Typography>
                                                 </Box>
 
-                                                {/* Pie Chart */}
+                                                {}
                                                 <Box height={220}>
                                                     <ResponsiveContainer width="100%" height="100%">
                                                         <PieChart>
@@ -428,7 +428,7 @@ function Compare() {
                                                     </ResponsiveContainer>
                                                 </Box>
 
-                                                {/* Distribution breakdown list */}
+                                                {}
                                                 <Box mt={2}>
                                                     {distData
                                                         .sort((a, b) => b.count - a.count)
@@ -474,7 +474,7 @@ function Compare() {
                 </>
             )}
 
-            {/* Empty State */}
+            {}
             {!results && !loading && (
                 <Card>
                     <CardContent sx={{ textAlign: 'center', py: 8 }}>

@@ -1,4 +1,4 @@
-# File: backend/algorithms/dynamic_programming.py
+
 
 import time
 import copy
@@ -36,13 +36,13 @@ def dp_schedule(
     dcs = copy.deepcopy(datacenters)
     base_time = datetime.utcnow()
     
-    # Track capacity per (dc, time_slot)
+    
     capacity = {
         dc.id: {t: dc.total_cpu for t in range(time_slots)}
         for dc in dcs
     }
     
-    # Sort by deadline (urgent first)
+    
     sorted_workloads = sorted(
         workloads,
         key=lambda w: (w.deadline or datetime.max, -w.priority)
@@ -56,7 +56,7 @@ def dp_schedule(
         
         task_duration = max(1, int(workload.duration))
         
-        # Calculate valid time range
+        
         if workload.deadline:
             deadline_hours = max(1, int((workload.deadline - base_time).total_seconds() / 3600))
             max_start = min(time_slots - task_duration, deadline_hours - task_duration)
@@ -65,18 +65,18 @@ def dp_schedule(
         
         max_start = max(0, min(max_start, time_slots - 1))
         
-        # Try all (time_slot, datacenter) combinations
+        
         for t in range(max_start + 1):
             for dc in dcs:
-                # Check capacity
+                
                 if capacity[dc.id][t] < workload.cpu:
                     continue
                 
-                # Get carbon from forecast
+                
                 forecast = carbon_forecast.get((dc.id, t), {'intensity': 200, 'renewable': 30})
                 carbon_intensity = forecast.get('intensity', 200)
                 
-                # Calculate carbon
+                
                 carbon_emissions = workload.energy_kwh * carbon_intensity
                 
                 if carbon_emissions < min_carbon:

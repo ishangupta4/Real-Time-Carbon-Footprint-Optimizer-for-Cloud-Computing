@@ -27,14 +27,14 @@ def get_carbon_intensity():
     }
     """
     try:
-        # Get query parameters
+        
         regions = request.args.get('regions')
         include_forecast = request.args.get('include_forecast', 'false').lower() == 'true'
         
-        # Fetch current intensity
+        
         carbon_data = carbon_client.get_current_intensity()
         
-        # Filter regions if specified
+        
         if regions:
             region_list = [r.strip() for r in regions.split(',')]
             carbon_data = {k: v for k, v in carbon_data.items() if k in region_list}
@@ -45,10 +45,10 @@ def get_carbon_intensity():
             'timestamp': datetime.utcnow().isoformat()
         }
         
-        # Add forecast if requested
+        
         if include_forecast:
             forecast = carbon_client.get_forecast(24)
-            # Convert tuple keys to string for JSON
+            
             forecast_json = {
                 f"{dc_id}_{hour}": data 
                 for (dc_id, hour), data in forecast.items()
@@ -77,7 +77,7 @@ def get_carbon_forecast():
         
         forecast = carbon_client.get_forecast(hours)
         
-        # Structure forecast by datacenter
+        
         structured = {}
         for (dc_id, hour), data in forecast.items():
             if dc_id not in structured:
@@ -88,7 +88,7 @@ def get_carbon_forecast():
                 'renewable': data.get('renewable')
             })
         
-        # Sort by hour
+        
         for dc_id in structured:
             structured[dc_id].sort(key=lambda x: x['hour'])
         

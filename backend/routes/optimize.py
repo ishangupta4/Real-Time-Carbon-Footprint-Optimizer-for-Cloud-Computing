@@ -37,7 +37,7 @@ def optimize_workloads():
                 'error': 'Missing workloads in request body'
             }), 400
         
-        # Parse workloads
+        
         workloads = []
         for w_data in data['workloads']:
             try:
@@ -55,11 +55,11 @@ def optimize_workloads():
                 'error': 'No valid workloads provided'
             }), 400
         
-        # Get algorithm and datacenter preferences
+        
         algorithm = data.get('algorithm', 'greedy')
         datacenter_ids = data.get('datacenters')
         
-        # Validate algorithm
+        
         valid_algorithms = ['greedy', 'dp', 'fcfs', 'round_robin']
         if algorithm not in valid_algorithms:
             return jsonify({
@@ -67,7 +67,7 @@ def optimize_workloads():
                 'error': f'Invalid algorithm. Must be one of: {valid_algorithms}'
             }), 400
         
-        # Run optimization
+        
         result = optimizer_service.optimize(
             workloads=workloads,
             algorithm=algorithm,

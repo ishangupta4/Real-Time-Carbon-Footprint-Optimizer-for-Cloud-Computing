@@ -26,7 +26,7 @@ def generate_workloads():
     try:
         data = request.get_json() or {}
         
-        count = min(int(data.get('count', 50)), 1000)  # Max 1000
+        count = min(int(data.get('count', 50)), 1000)  
         time_span = float(data.get('time_span_hours', 24))
         mode = data.get('mode', 'normal')
         

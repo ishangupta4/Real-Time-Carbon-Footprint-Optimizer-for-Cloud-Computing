@@ -1,4 +1,4 @@
-// File: frontend/src/index.js
+
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
@@ -10,7 +10,7 @@ const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#2e7d32', // Green
+      main: '#2e7d32', 
       light: '#60ad5e',
       dark: '#005005',
     },

@@ -20,8 +20,8 @@ class MetricsCalculator:
         carbon_saved = base_carbon - opt_carbon
         percent_reduction = (carbon_saved / base_carbon * 100) if base_carbon > 0 else 0
         
-        # Convert to relatable equivalents
-        # Source: EPA greenhouse gas equivalencies
+        
+        
         metrics = {
             'total_carbon_optimized': round(opt_carbon, 2),
             'total_carbon_baseline': round(base_carbon, 2),
@@ -29,11 +29,11 @@ class MetricsCalculator:
             'percent_reduction': round(percent_reduction, 1),
             'carbon_per_task': round(opt_carbon / len(optimized.assignments), 2) if optimized.assignments else 0,
             
-            # Equivalents (approximate)
-            'trees_equivalent': round(carbon_saved / 21000, 2),  # kg CO2 absorbed by tree/year
-            'miles_driven_saved': round(carbon_saved / 404, 1),  # gCO2 per mile
-            'smartphone_charges': round(carbon_saved / 8.22, 0),  # gCO2 per charge
-            'hours_led_bulb': round(carbon_saved / 5, 0),  # 10W LED at 500g/kWh
+            
+            'trees_equivalent': round(carbon_saved / 21000, 2),  
+            'miles_driven_saved': round(carbon_saved / 404, 1),  
+            'smartphone_charges': round(carbon_saved / 8.22, 0),  
+            'hours_led_bulb': round(carbon_saved / 5, 0),  
         }
         
         return metrics
@@ -62,7 +62,7 @@ class MetricsCalculator:
         
         renewable_values = [a.renewable_percentage for a in schedule.assignments]
         
-        # Count tasks assigned to "green" datacenters (>50% renewable)
+        
         green_tasks = sum(1 for r in renewable_values if r > 50)
         
         return {
@@ -113,7 +113,7 @@ class MetricsCalculator:
             distribution[dc_id]['total_carbon'] += assignment.carbon_emissions
             distribution[dc_id]['total_cost'] += assignment.cost
         
-        # Round values
+        
         for dc_id in distribution:
             distribution[dc_id]['total_carbon'] = round(distribution[dc_id]['total_carbon'], 2)
             distribution[dc_id]['total_cost'] = round(distribution[dc_id]['total_cost'], 2)

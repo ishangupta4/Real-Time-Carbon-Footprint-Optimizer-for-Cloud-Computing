@@ -1,4 +1,4 @@
-# File: backend/algorithms/baseline.py
+
 
 import time
 import copy
@@ -32,10 +32,10 @@ def fcfs_schedule(
     """
     start_time = time.time()
     
-    # Deep copy
+    
     dcs = copy.deepcopy(datacenters)
     
-    # Sort workloads by arrival time
+    
     sorted_workloads = sorted(workloads, key=lambda w: w.arrival_time or datetime.utcnow())
     
     assignments = []
@@ -43,10 +43,10 @@ def fcfs_schedule(
     for workload in sorted_workloads:
         assigned = False
         
-        # KEY: Try DCs in LIST ORDER (no sorting by carbon!)
+        
         for dc in dcs:
             if dc.can_accommodate(workload.cpu, workload.memory):
-                # Get carbon info (for reporting only, NOT for selection)
+                
                 dc_carbon = carbon_data.get(dc.id, {'intensity': 200, 'renewable': 30})
                 carbon_intensity = dc_carbon.get('intensity', 200)
                 renewable_pct = dc_carbon.get('renewable', 30)
@@ -69,10 +69,10 @@ def fcfs_schedule(
                 assignments.append(assignment)
                 dc.allocate(workload.cpu, workload.memory)
                 assigned = True
-                break  # Move to next workload
+                break  
         
         if not assigned:
-            pass  # Could not schedule this workload
+            pass  
     
     execution_time = (time.time() - start_time) * 1000
     

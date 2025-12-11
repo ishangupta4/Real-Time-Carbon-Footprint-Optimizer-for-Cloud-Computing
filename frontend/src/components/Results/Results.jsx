@@ -1,4 +1,4 @@
-// File: frontend/src/components/Results/Results.jsx
+
 
 import React, { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -63,7 +63,7 @@ function Results() {
     const navigate = useNavigate();
     const { result } = location.state || {};
 
-    // Memoize schedule data transformation for timeline chart
+    
     const { scheduleData, uniqueDCs } = useMemo(() => {
         if (!result?.schedule?.assignments || result.schedule.assignments.length === 0) {
             return { scheduleData: [], uniqueDCs: [] };
@@ -71,16 +71,16 @@ function Results() {
 
         const assignments = result.schedule.assignments;
 
-        // Get unique datacenters from actual assignments
+        
         const uniqueDCs = [...new Set(assignments.map(a => a.datacenter_id))].sort();
 
-        // Create index mapping for Y-axis
+        
         const dcIndexMap = {};
         uniqueDCs.forEach((dc, index) => {
             dcIndexMap[dc] = index;
         });
 
-        // Transform assignments to scatter chart data
+        
         const scheduleData = assignments.map((a, idx) => {
             const startTime = new Date(a.start_time);
             const endTime = new Date(a.end_time);
@@ -89,7 +89,7 @@ function Results() {
             return {
                 x: startHour,
                 y: dcIndexMap[a.datacenter_id],
-                z: Math.max(a.carbon_emissions || 10, 10), // Minimum size for visibility
+                z: Math.max(a.carbon_emissions || 10, 10), 
                 dc: a.datacenter_id,
                 workload: a.workload_id?.substring(0, 8) || `Task ${idx + 1}`,
                 carbon: Math.round(a.carbon_emissions || 0),
@@ -124,7 +124,7 @@ function Results() {
     const performanceMetrics = metrics?.performance || {};
     const distribution = metrics?.distribution || {};
 
-    // Prepare distribution data
+    
     const distributionData = Object.entries(distribution).map(([dc, data]) => ({
         name: dc.replace('UK-', ''),
         fullName: dc,
@@ -132,13 +132,13 @@ function Results() {
         carbon: Math.round(data.total_carbon),
     }));
 
-    // Prepare comparison data
+    
     const comparisonData = [
         { name: 'Optimized', carbon: Math.round(carbonMetrics.total_carbon_optimized || 0), fill: '#4caf50' },
         { name: 'Baseline (FCFS)', carbon: Math.round(carbonMetrics.total_carbon_baseline || 0), fill: '#ff9800' },
     ];
 
-    // Custom tooltip for scatter chart
+    
     const ScatterTooltip = ({ active, payload }) => {
         if (active && payload && payload.length > 0) {
             const data = payload[0].payload;
@@ -159,7 +159,7 @@ function Results() {
 
     return (
         <Container maxWidth={false}>
-            {/* Header */}
+            {}
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
                 <Box>
                     <Typography variant="h4" gutterBottom>Optimization Results</Typography>
@@ -175,7 +175,7 @@ function Results() {
                 </Box>
             </Box>
 
-            {/* Metrics Cards - Full Width Grid */}
+            {}
             <Grid container spacing={2} mb={3}>
                 <Grid item xs={12} sm={6} md={3}>
                     <Card sx={{ height: '100%', bgcolor: 'success.50', borderLeft: 4, borderColor: 'success.main' }}>
@@ -238,7 +238,7 @@ function Results() {
                 </Grid>
             </Grid>
 
-            {/* Environmental Impact */}
+            {}
             <Alert severity="success" sx={{ mb: 3 }}>
                 <Typography variant="subtitle2" fontWeight="bold">Environmental Impact Equivalent</Typography>
                 <Box display="flex" gap={4} mt={1} flexWrap="wrap">
@@ -253,7 +253,7 @@ function Results() {
                 </Box>
             </Alert>
 
-            {/* Charts Row 1 */}
+            {}
             <Grid container spacing={3} mb={3}>
                 <Grid item xs={12} md={6}>
                     <Card sx={{ height: 400 }}>
@@ -308,7 +308,7 @@ function Results() {
                 </Grid>
             </Grid>
 
-            {/* Schedule Timeline Chart - FIXED */}
+            {}
             {scheduleData.length > 0 && (
                 <Card sx={{ mb: 3 }}>
                     <CardContent>
@@ -317,7 +317,7 @@ function Results() {
                             Each dot represents a task. Position shows datacenter and start time. Size indicates carbon emissions.
                         </Typography>
 
-                        {/* Legend */}
+                        {}
                         <Box display="flex" flexWrap="wrap" gap={2} mb={2}>
                             {uniqueDCs.map(dc => (
                                 <Box key={dc} display="flex" alignItems="center" gap={0.5}>
@@ -392,7 +392,7 @@ function Results() {
                 </Card>
             )}
 
-            {/* Carbon by Datacenter Bar Chart */}
+            {}
             <Card sx={{ mb: 3 }}>
                 <CardContent>
                     <Typography variant="h6" gutterBottom>Carbon Emissions by Datacenter</Typography>
@@ -414,7 +414,7 @@ function Results() {
                 </CardContent>
             </Card>
 
-            {/* Schedule Table */}
+            {}
             <Card>
                 <CardContent>
                     <Typography variant="h6" gutterBottom>Schedule Details</Typography>

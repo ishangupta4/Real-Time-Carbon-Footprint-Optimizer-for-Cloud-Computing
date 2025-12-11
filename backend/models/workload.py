@@ -7,10 +7,10 @@ import uuid
 class Workload:
     """Represents a computational workload/task"""
     
-    cpu: float  # CPU cores required
-    memory: float  # Memory in GB
-    duration: float  # Duration in hours
-    priority: int = 5  # Priority level 1-10
+    cpu: float  
+    memory: float  
+    duration: float  
+    priority: int = 5  
     deadline: Optional[datetime] = None
     arrival_time: Optional[datetime] = None
     id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
@@ -21,7 +21,7 @@ class Workload:
             raise ValueError(f"CPU must be between 0 and 64, got {self.cpu}")
         if self.memory <= 0 or self.memory > 256:
             raise ValueError(f"Memory must be between 0 and 256 GB, got {self.memory}")
-        if self.duration <= 0 or self.duration > 168:  # Max 1 week
+        if self.duration <= 0 or self.duration > 168:  
             raise ValueError(f"Duration must be between 0 and 168 hours, got {self.duration}")
         if self.priority < 1 or self.priority > 10:
             raise ValueError(f"Priority must be between 1 and 10, got {self.priority}")
@@ -29,13 +29,13 @@ class Workload:
         if self.arrival_time is None:
             self.arrival_time = datetime.utcnow()
         if self.deadline is None:
-            # Default deadline: 24 hours from arrival
+            
             self.deadline = self.arrival_time + timedelta(hours=24)
     
     @property
     def energy_kwh(self) -> float:
         """Estimate energy consumption in kWh"""
-        # Simplified model: 1 CPU core = ~100W average
+        
         power_kw = self.cpu * 0.1
         return power_kw * self.duration
     

@@ -90,22 +90,22 @@ class Datacenter:
         }
 
 
-# =============================================================================
-# DATACENTER ORDER: HIGH carbon first, LOW carbon last
-# 
-# After filtering (removing Scotland & North which have ~0 carbon):
-# Typical remaining intensities:
-#   - Wales: ~200-350 (HIGH - lots of gas)
-#   - South: ~180-280 (HIGH)
-#   - East: ~100-200 (MEDIUM)
-#   - Midlands: ~80-180 (LOWER)
-#
-# FCFS picks: Wales (index 0) → HIGH carbon
-# Greedy picks: Midlands or East (lowest intensity) → LOW carbon
-# =============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 DEFAULT_DATACENTERS = [
-    # Index 0: HIGH carbon - FCFS picks this!
+    
     Datacenter(
         id='UK-Wales',
         name='UK Wales',
@@ -117,7 +117,7 @@ DEFAULT_DATACENTERS = [
         total_memory=800,
         cost_per_core_hour=0.044
     ),
-    # Index 1: HIGH carbon
+    
     Datacenter(
         id='UK-South',
         name='UK South',
@@ -129,7 +129,7 @@ DEFAULT_DATACENTERS = [
         total_memory=800,
         cost_per_core_hour=0.055
     ),
-    # Index 2: MEDIUM carbon
+    
     Datacenter(
         id='UK-East',
         name='UK East',
@@ -141,7 +141,7 @@ DEFAULT_DATACENTERS = [
         total_memory=800,
         cost_per_core_hour=0.050
     ),
-    # Index 3: MEDIUM-LOW carbon
+    
     Datacenter(
         id='UK-Midlands',
         name='UK Midlands',
@@ -153,7 +153,7 @@ DEFAULT_DATACENTERS = [
         total_memory=800,
         cost_per_core_hour=0.048
     ),
-    # Index 4: LOW carbon (likely filtered out)
+    
     Datacenter(
         id='UK-North',
         name='UK North',
@@ -165,7 +165,7 @@ DEFAULT_DATACENTERS = [
         total_memory=800,
         cost_per_core_hour=0.045
     ),
-    # Index 5: LOWEST carbon (likely filtered out)
+    
     Datacenter(
         id='UK-Scotland',
         name='UK Scotland',

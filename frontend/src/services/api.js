@@ -1,4 +1,4 @@
-// File: frontend/src/services/api.js
+
 
 import axios from 'axios';
 
@@ -12,7 +12,7 @@ const api = axios.create({
     timeout: 30000,
 });
 
-// Response interceptor for error handling
+
 api.interceptors.response.use(
     (response) => response,
     (error) => {
@@ -22,13 +22,13 @@ api.interceptors.response.use(
 );
 
 export const carbonAPI = {
-    // Health check
+    
     health: async () => {
         const response = await api.get('/health');
         return response.data;
     },
 
-    // Get current carbon intensity
+    
     getCarbonIntensity: async (includeForecast = false) => {
         const response = await api.get('/carbon-intensity', {
             params: { include_forecast: includeForecast }
@@ -36,7 +36,7 @@ export const carbonAPI = {
         return response.data;
     },
 
-    // Get carbon forecast
+    
     getForecast: async (hours = 24) => {
         const response = await api.get('/carbon-intensity/forecast', {
             params: { hours }
@@ -44,13 +44,13 @@ export const carbonAPI = {
         return response.data;
     },
 
-    // Get all datacenters
+    
     getDatacenters: async () => {
         const response = await api.get('/datacenters');
         return response.data;
     },
 
-    // Optimize workloads
+    
     optimize: async (workloads, algorithm = 'greedy', datacenters = null) => {
         const response = await api.post('/optimize', {
             workloads,
@@ -60,7 +60,7 @@ export const carbonAPI = {
         return response.data;
     },
 
-    // Generate simulated workloads
+    
     simulate: async (count = 50, timeSpanHours = 24, mode = 'normal') => {
         const response = await api.post('/simulate', {
             count,
@@ -70,7 +70,7 @@ export const carbonAPI = {
         return response.data;
     },
 
-    // Compare algorithms
+    
     compare: async (workloads, algorithms = null) => {
         const response = await api.post('/compare', {
             workloads,
@@ -79,7 +79,7 @@ export const carbonAPI = {
         return response.data;
     },
 
-    // NEW: Upload and parse workloads file
+    
     uploadWorkloads: async (file) => {
         const formData = new FormData();
         formData.append('file', file);
@@ -93,12 +93,12 @@ export const carbonAPI = {
         return response.data;
     },
 
-    // NEW: Download CSV template
+    
     downloadCSVTemplate: () => {
         window.open(`${API_BASE_URL}/upload/template/csv`, '_blank');
     },
 
-    // NEW: Download JSON template
+    
     downloadJSONTemplate: () => {
         window.open(`${API_BASE_URL}/upload/template/json`, '_blank');
     },

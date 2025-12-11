@@ -1,4 +1,4 @@
-// File: frontend/src/components/Optimize/Optimize.jsx
+
 
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -64,29 +64,29 @@ function Optimize() {
     const navigate = useNavigate();
     const fileInputRef = useRef(null);
 
-    // Tab state: 0 = Manual, 1 = Upload, 2 = Simulate
+    
     const [tabValue, setTabValue] = useState(0);
 
-    // Manual workloads
+    
     const [workloads, setWorkloads] = useState([
         { cpu: 4, memory: 8, duration: 2, priority: 5 }
     ]);
 
-    // Upload state
+    
     const [uploadedFile, setUploadedFile] = useState(null);
     const [uploadedWorkloads, setUploadedWorkloads] = useState([]);
     const [uploadError, setUploadError] = useState(null);
     const [uploading, setUploading] = useState(false);
 
-    // Simulation state
+    
     const [simulationCount, setSimulationCount] = useState(50);
 
-    // Common state
+    
     const [algorithm, setAlgorithm] = useState('greedy');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // Manual workload handlers
+    
     const addWorkload = () => {
         setWorkloads([...workloads, { cpu: 2, memory: 4, duration: 1, priority: 5 }]);
     };
@@ -103,7 +103,7 @@ function Optimize() {
         setWorkloads(updated);
     };
 
-    // File upload handlers
+    
     const handleFileSelect = async (event) => {
         const file = event.target.files[0];
         if (!file) return;
@@ -149,7 +149,7 @@ function Optimize() {
         }
     };
 
-    // Run optimization
+    
     const runOptimization = async () => {
         setLoading(true);
         setError(null);
@@ -158,10 +158,10 @@ function Optimize() {
             let workloadsToOptimize;
 
             if (tabValue === 0) {
-                // Manual
+                
                 workloadsToOptimize = workloads;
             } else if (tabValue === 1) {
-                // Upload
+                
                 if (uploadedWorkloads.length === 0) {
                     setError('Please upload a file first');
                     setLoading(false);
@@ -169,7 +169,7 @@ function Optimize() {
                 }
                 workloadsToOptimize = uploadedWorkloads;
             } else {
-                // Simulate
+                
                 const simResponse = await carbonAPI.simulate(simulationCount);
                 workloadsToOptimize = simResponse.workloads;
             }
@@ -185,7 +185,7 @@ function Optimize() {
 
     const selectedAlgo = algorithms.find(a => a.value === algorithm);
 
-    // Get current workload count based on tab
+    
     const getWorkloadCount = () => {
         if (tabValue === 0) return workloads.length;
         if (tabValue === 1) return uploadedWorkloads.length;
@@ -204,7 +204,7 @@ function Optimize() {
             )}
 
             <Grid container spacing={3}>
-                {/* Workload Configuration */}
+                {}
                 <Grid item xs={12} lg={8}>
                     <Card sx={{ height: '100%' }}>
                         <CardContent>
@@ -220,7 +220,7 @@ function Optimize() {
                                 <Tab label="Simulate" />
                             </Tabs>
 
-                            {/* Manual Entry Tab */}
+                            {}
                             <TabPanel value={tabValue} index={0}>
                                 {workloads.map((workload, index) => (
                                     <Paper key={index} elevation={0} sx={{ p: 2, mb: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
@@ -294,7 +294,7 @@ function Optimize() {
                                 </Button>
                             </TabPanel>
 
-                            {/* Upload File Tab */}
+                            {}
                             <TabPanel value={tabValue} index={1}>
                                 <Box mb={3}>
                                     <Alert severity="info" sx={{ mb: 2 }}>
@@ -381,7 +381,7 @@ function Optimize() {
                                     )}
                                 </Box>
 
-                                {/* Preview uploaded workloads */}
+                                {}
                                 {uploadedWorkloads.length > 0 && (
                                     <Box>
                                         <Typography variant="subtitle2" gutterBottom fontWeight="bold">
@@ -420,7 +420,7 @@ function Optimize() {
                                 )}
                             </TabPanel>
 
-                            {/* Simulate Tab */}
+                            {}
                             <TabPanel value={tabValue} index={2}>
                                 <Alert severity="info" sx={{ mb: 3 }}>
                                     Generate random workloads to test the optimizer with realistic data
@@ -449,7 +449,7 @@ function Optimize() {
                     </Card>
                 </Grid>
 
-                {/* Algorithm Selection */}
+                {}
                 <Grid item xs={12} lg={4}>
                     <Card sx={{ height: '100%' }}>
                         <CardContent>

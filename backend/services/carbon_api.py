@@ -20,9 +20,9 @@ class CarbonAPIClient:
     
     BASE_URL = "https://api.carbonintensity.org.uk"
     
-    # Minimum carbon intensity threshold
-    # DCs below this are excluded to show algorithm differences
-    MIN_CARBON_THRESHOLD = 50  # gCO2/kWh
+    
+    
+    MIN_CARBON_THRESHOLD = 50  
     
     REGION_MAPPING = {
         '1': 'UK-Scotland', '2': 'UK-Scotland',
@@ -103,7 +103,7 @@ class CarbonAPIClient:
                     g.get('perc', 0) for g in gen_mix if g.get('fuel') in renewable_sources
                 )
                 
-                # Only update if we don't have this DC yet, or if this value is lower
+                
                 if dc_id not in result or intensity < result[dc_id]['intensity']:
                     result[dc_id] = {
                         'intensity': intensity,
@@ -114,10 +114,10 @@ class CarbonAPIClient:
                         'last_updated': datetime.utcnow().isoformat()
                     }
             
-            # ================================================
-            # FILTER: Remove DCs with very low carbon intensity
-            # This ensures algorithms have meaningful differences
-            # ================================================
+            
+            
+            
+            
             filtered_result = {}
             for dc_id, dc_data in result.items():
                 if dc_data['intensity'] < self.MIN_CARBON_THRESHOLD:
@@ -128,14 +128,14 @@ class CarbonAPIClient:
             if excluded:
                 print(f"[CarbonAPI] Excluded low-carbon DCs (< {self.MIN_CARBON_THRESHOLD} gCO2/kWh): {', '.join(excluded)}")
             
-            # Ensure we have at least 3 DCs for meaningful comparison
+            
             if len(filtered_result) < 3:
                 print("[CarbonAPI] WARNING: Too few DCs after filtering, using all DCs with minimum floor")
                 for dc_id, dc_data in result.items():
                     dc_data['intensity'] = max(dc_data['intensity'], self.MIN_CARBON_THRESHOLD)
                     filtered_result[dc_id] = dc_data
             
-            # Print final summary
+            
             print("\n[CarbonAPI] Final carbon data (after filtering):")
             for dc_id, dc_data in sorted(filtered_result.items(), key=lambda x: x[1]['intensity']):
                 print(f"    {dc_id}: intensity={dc_data['intensity']}, renewable={dc_data['renewable']:.1f}%")
@@ -170,7 +170,7 @@ class CarbonAPIClient:
             response.raise_for_status()
             data = response.json()
             
-            # Get current regional data (already filtered)
+            
             current = self.get_current_intensity()
             
             result = {}
@@ -186,7 +186,7 @@ class CarbonAPIClient:
                     ratio = current_intensity / avg_intensity if avg_intensity > 0 else 1.0
                     adjusted_intensity = national_intensity * ratio
                     
-                    # Apply same minimum threshold to forecast
+                    
                     adjusted_intensity = max(adjusted_intensity, self.MIN_CARBON_THRESHOLD)
                     
                     result[(dc_id, hour_idx)] = {
@@ -238,5 +238,5 @@ class CarbonAPIClient:
         print("[CarbonAPI] Cache cleared")
 
 
-# Singleton instance
+
 carbon_client = CarbonAPIClient()

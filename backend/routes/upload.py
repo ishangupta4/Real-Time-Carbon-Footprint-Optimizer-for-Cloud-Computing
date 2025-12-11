@@ -1,4 +1,4 @@
-# File: backend/routes/upload.py
+
 
 import json
 import csv
@@ -48,7 +48,7 @@ def parse_workloads():
         
         workloads_data = []
         
-        # Parse based on file type
+        
         if filename.endswith('.json'):
             workloads_data = parse_json(content)
         elif filename.endswith('.csv'):
@@ -59,7 +59,7 @@ def parse_workloads():
                 'error': 'Unsupported file format. Use .csv or .json'
             }), 400
         
-        # Validate and create Workload objects
+        
         workloads = []
         errors = []
         
@@ -97,7 +97,7 @@ def parse_json(content: str) -> list:
     """Parse JSON content into workload data."""
     data = json.loads(content)
     
-    # Handle both array and object with 'workloads' key
+    
     if isinstance(data, list):
         return data
     elif isinstance(data, dict) and 'workloads' in data:
@@ -110,21 +110,21 @@ def parse_csv(content: str) -> list:
     """Parse CSV content into workload data."""
     workloads = []
     
-    # Use StringIO to read CSV from string
+    
     csv_file = io.StringIO(content)
     
-    # Try to detect if there's a header
+    
     sample = content[:1000]
     has_header = 'cpu' in sample.lower() or 'memory' in sample.lower()
     
     if has_header:
         reader = csv.DictReader(csv_file)
         for row in reader:
-            # Normalize keys to lowercase
+            
             normalized = {k.lower().strip(): v.strip() for k, v in row.items()}
             workloads.append(normalized)
     else:
-        # No header - assume order: cpu, memory, duration, priority
+        
         reader = csv.reader(csv_file)
         for row in reader:
             if len(row) >= 3:
@@ -141,7 +141,7 @@ def parse_csv(content: str) -> list:
 def validate_workload_data(data: dict, index: int) -> Workload:
     """Validate and create a Workload from parsed data."""
     
-    # Extract and convert values
+    
     try:
         cpu = float(data.get('cpu', 0))
     except (ValueError, TypeError):
@@ -162,7 +162,7 @@ def validate_workload_data(data: dict, index: int) -> Workload:
     except (ValueError, TypeError):
         priority = 5
     
-    # Validate ranges
+    
     if cpu <= 0 or cpu > 64:
         raise ValueError(f"CPU must be between 0 and 64, got {cpu}")
     if memory <= 0 or memory > 256:

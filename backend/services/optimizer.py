@@ -42,17 +42,17 @@ class OptimizerService:
         Get fresh copies of datacenters with reset capacity.
         If carbon_data is provided, only include DCs that have carbon data.
         """
-        # Start with all or filtered DCs
+        
         if datacenter_ids:
             dcs = [dc for dc in self.datacenters if dc.id in datacenter_ids]
         else:
             dcs = self.datacenters
         
-        # Filter to only DCs that have carbon data (if provided)
+        
         if carbon_data:
             dcs = [dc for dc in dcs if dc.id in carbon_data]
         
-        # Deep copy and reset capacity
+        
         fresh_dcs = copy.deepcopy(dcs)
         for dc in fresh_dcs:
             dc.reset_capacity()
@@ -67,31 +67,31 @@ class OptimizerService:
     ) -> Dict:
         """Run optimization algorithm on workloads."""
         
-        # Fetch current carbon data FIRST (this filters out low-carbon DCs)
+        
         carbon_data = self.carbon_client.get_current_intensity()
         
-        # Get fresh datacenters - only those with carbon data
+        
         dcs = self._get_fresh_datacenters(datacenter_ids, carbon_data)
         
-        # Debug output
+        
         print(f"\n[Optimizer] Using {len(dcs)} datacenters: {[dc.id for dc in dcs]}")
         print(f"[Optimizer] Carbon data available for: {list(carbon_data.keys())}")
         
-        # Get algorithm function
+        
         algo_func = self.ALGORITHMS.get(algorithm, greedy_schedule)
         
-        # Run optimization
+        
         if algorithm == 'dp':
             forecast = self.carbon_client.get_forecast(24)
             schedule = algo_func(workloads, dcs, forecast, time_slots=24)
         else:
             schedule = algo_func(workloads, dcs, carbon_data)
         
-        # Run FCFS baseline for comparison (using same filtered DCs)
+        
         baseline_dcs = self._get_fresh_datacenters(datacenter_ids, carbon_data)
         baseline = fcfs_schedule(workloads, baseline_dcs, carbon_data)
         
-        # Calculate metrics
+        
         metrics = self.metrics_calculator.calculate_all_metrics(schedule, baseline)
         
         return {
@@ -114,14 +114,14 @@ class OptimizerService:
         if algorithms is None:
             algorithms = ['greedy', 'dp', 'fcfs']
         
-        # Fetch carbon data once (filtered)
+        
         carbon_data = self.carbon_client.get_current_intensity()
         forecast = self.carbon_client.get_forecast(24)
         
         results = {}
         
         for algo_name in algorithms:
-            # Get fresh datacenters for each algorithm (filtered)
+            
             dcs = self._get_fresh_datacenters(datacenter_ids, carbon_data)
             
             algo_func = self.ALGORITHMS.get(algo_name)
@@ -133,7 +133,7 @@ class OptimizerService:
             else:
                 schedule = algo_func(workloads, dcs, carbon_data)
             
-            # Get distribution
+            
             distribution = {}
             for a in schedule.assignments:
                 dc = a.datacenter_id
@@ -148,7 +148,7 @@ class OptimizerService:
                 'distribution': distribution
             }
         
-        # Find best algorithm
+        
         best_algo = min(
             results.keys(),
             key=lambda k: results[k]['total_carbon']
@@ -164,5 +164,5 @@ class OptimizerService:
         }
 
 
-# Singleton
+
 optimizer_service = OptimizerService()

@@ -70,5 +70,4 @@ carbon-optimizer/
 1. **Greedy**: O(n × d log d) - Fast, assigns to lowest carbon DC
 2. **Dynamic Programming**: O(n × T² × D²) - Optimal with forecasts
 3. **FCFS**: O(n × d) - Baseline, first available DC
-4. **Round Robin**: O(n) - Even distribution baseline
 

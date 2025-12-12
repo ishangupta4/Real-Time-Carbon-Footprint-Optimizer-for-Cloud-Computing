@@ -51,11 +51,11 @@ const allAlgorithms = [
 
 const DC_COLORS = {
     'UK-Scotland': '#4caf50',
-    'UK-North': '#8bc34a',
-    'UK-Wales': '#cddc39',
-    'UK-Midlands': '#ffeb3b',
-    'UK-East': '#ff9800',
-    'UK-South': '#f44336',
+    'UK-North': '#3778cdff',
+    'UK-Wales': '#d47257ff',
+    'UK-Midlands': '#d39f26ff',
+    'UK-East': '#7ac5daff',
+    'UK-South': '#4dba4bff',
 };
 
 function Compare() {
@@ -270,10 +270,10 @@ function Compare() {
                     </Card>
 
                     {}
-                    <Grid container spacing={3} mb={3}>
+                    <Grid container spacing={15} mb={3}>
                         {}
-                        <Grid item xs={12} md={6}>
-                            <Card sx={{ height: 400 }}>
+                        <Grid item xs={12} md={8}>
+                            <Card sx={{ height: 400, width: 800 }}>
                                 <CardContent sx={{ height: '100%' }}>
                                     <Typography variant="h6" gutterBottom>Carbon Emissions Comparison</Typography>
                                     <Box height="calc(100% - 40px)">
@@ -281,7 +281,7 @@ function Compare() {
                                             <BarChart data={chartData} layout="vertical">
                                                 <CartesianGrid strokeDasharray="3 3" />
                                                 <XAxis type="number" />
-                                                <YAxis dataKey="name" type="category" width={150} />
+                                                <YAxis dataKey="name" type="category" width={100} />
                                                 <Tooltip formatter={(value) => [`${value.toLocaleString()} gCO₂`, 'Carbon']} />
                                                 <Bar dataKey="carbon" radius={[0, 4, 4, 0]}>
                                                     {chartData.map((entry, index) => (
@@ -296,8 +296,8 @@ function Compare() {
                         </Grid>
 
                         {}
-                        <Grid item xs={12} md={6}>
-                            <Card sx={{ height: 400 }}>
+                        <Grid item xs={12} md={4}>
+                            <Card sx={{ height: 400, width: 500 }}>
                                 <CardContent sx={{ height: '100%' }}>
                                     <Typography variant="h6" gutterBottom>Execution Time Comparison</Typography>
                                     <Box height="calc(100% - 40px)">
@@ -332,9 +332,9 @@ function Compare() {
                             </Typography>
 
                             {}
-                            <Box display="flex" justifyContent="center" flexWrap="wrap" gap={2} mb={3}>
+                            <Box display="flex" justifyContent="center" flexWrap="wrap" gap={6} mb={3}>
                                 {Object.entries(DC_COLORS).map(([dc, color]) => (
-                                    <Box key={dc} display="flex" alignItems="center" gap={0.5}>
+                                    <Box key={dc} display="flex" alignItems="center" gap={1}>
                                         <Box
                                             sx={{
                                                 width: 14,
@@ -352,7 +352,7 @@ function Compare() {
                             </Box>
 
                             {}
-                            <Grid container spacing={3}>
+                            <Grid container spacing={5} justifyContent="space-around">
                                 {selectedAlgorithms.map((algo) => {
                                     const distData = getDistributionData(algo);
                                     const algoInfo = allAlgorithms.find(a => a.value === algo);
@@ -361,13 +361,14 @@ function Compare() {
                                     return (
                                         <Grid item xs={12} md={4} key={algo}>
                                             <Paper
-                                                elevation={2}
+                                                elevation={10}
                                                 sx={{
-                                                    p: 2,
+                                                    p: 6,
                                                     height: '100%',
+                                                    width: '100%',
                                                     border: '2px solid',
                                                     borderColor: algoInfo?.color || 'grey.300',
-                                                    borderRadius: 2,
+                                                    borderRadius: 8,
                                                     backgroundColor: 'background.paper'
                                                 }}
                                             >
@@ -390,7 +391,7 @@ function Compare() {
                                                 </Box>
 
                                                 {}
-                                                <Box height={220}>
+                                                <Box height={220} width={250}>
                                                     <ResponsiveContainer width="100%" height="100%">
                                                         <PieChart>
                                                             <Pie
@@ -399,13 +400,10 @@ function Compare() {
                                                                 nameKey="name"
                                                                 cx="50%"
                                                                 cy="50%"
-                                                                innerRadius={40}
-                                                                outerRadius={80}
+                                                                innerRadius={30}
+                                                                outerRadius={70}
                                                                 paddingAngle={2}
-                                                                label={({ name, percent }) =>
-                                                                    percent > 0.05 ? `${name}: ${(percent * 100).toFixed(0)}%` : ''
-                                                                }
-                                                                labelLine={true}
+                                                                labelLine={'False'}
                                                             >
                                                                 {distData.map((entry, index) => (
                                                                     <Cell

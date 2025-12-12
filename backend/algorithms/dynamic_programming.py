@@ -10,6 +10,10 @@ from models.datacenter import Datacenter
 from models.schedule import Assignment, Schedule
 
 
+def enough_cores(capacity, dc_id, start, dur, cpu):
+    # True only if the DC has ≥ cpu cores free for EVERY hour the task will run
+    return all(capacity[dc_id][h] >= cpu for h in range(start, start + dur))
+
 def dp_schedule(
     workloads: List[Workload],
     datacenters: List[Datacenter],
@@ -68,9 +72,19 @@ def dp_schedule(
         
         for t in range(max_start + 1):
             for dc in dcs:
-                
-                if capacity[dc.id][t] < workload.cpu:
-                    continue
+                if not enough_cores(capacity, dc.id, t, task_duration, workload.cpu):
+                    continue                    
+
+                default = {'intensity': 200, 'renewable': 30}
+                intensities = [
+                    carbon_forecast.get((dc.id, h), default)['intensity']
+                    for h in range(t, t + task_duration)
+                ]
+                avg_intensity = sum(intensities) / task_duration       
+                carbon_emissions = workload.energy_kwh * avg_intensity
+
+                for h in range(t, t + task_duration):
+                    capacity[dc.id][h] -= workload.cpu
                 
                 
                 forecast = carbon_forecast.get((dc.id, t), {'intensity': 200, 'renewable': 30})

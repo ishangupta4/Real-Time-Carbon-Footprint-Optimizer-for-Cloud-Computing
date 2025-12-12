@@ -39,11 +39,11 @@ import carbonAPI from '../../services/api';
 
 const getIntensityColor = (intensity) => {
     if (intensity < 100) return '#4caf50';
-    if (intensity < 150) return '#8bc34a';
-    if (intensity < 200) return '#cddc39';
-    if (intensity < 250) return '#ffeb3b';
-    if (intensity < 300) return '#ff9800';
-    return '#f44336';
+    if (intensity < 150) return '#3778cdff';
+    if (intensity < 200) return '#d47257ff';
+    if (intensity < 250) return '#7ac5daff';
+    if (intensity < 300) return '#4dba4bff';
+    return '#2b0603ff';
 };
 
 const getIntensityLabel = (intensity) => {
@@ -204,9 +204,9 @@ function Dashboard() {
             </Grid>
 
             {}
-            <Grid container spacing={3} mb={3}>
+            <Grid container spacing={5} mb={3}>
                 <Grid item xs={12} lg={8}>
-                    <Card sx={{ height: 450 }}>
+                    <Card sx={{ height: 450, width: 600 }}>
                         <CardContent sx={{ height: '100%' }}>
                             <Typography variant="h6" gutterBottom>Carbon Intensity by Datacenter</Typography>
                             <Box height="calc(100% - 40px)">

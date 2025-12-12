@@ -45,17 +45,18 @@ import {
     ScatterChart,
     Scatter,
     ZAxis,
+    LabelList
 } from 'recharts';
 
 const COLORS = ['#2196f3', '#4caf50', '#ff9800', '#9c27b0', '#f44336', '#00bcd4'];
 
 const DC_COLORS = {
     'UK-Scotland': '#4caf50',
-    'UK-North': '#8bc34a',
-    'UK-Wales': '#cddc39',
-    'UK-Midlands': '#ffeb3b',
-    'UK-East': '#ff9800',
-    'UK-South': '#f44336',
+    'UK-North': '#3778cdff',
+    'UK-Wales': '#d47257ff',
+    'UK-Midlands': '#d39f26ff',
+    'UK-East': '#7ac5daff',
+    'UK-South': '#4dba4bff',
 };
 
 function Results() {
@@ -134,8 +135,8 @@ function Results() {
 
     
     const comparisonData = [
-        { name: 'Optimized', carbon: Math.round(carbonMetrics.total_carbon_optimized || 0), fill: '#4caf50' },
-        { name: 'Baseline (FCFS)', carbon: Math.round(carbonMetrics.total_carbon_baseline || 0), fill: '#ff9800' },
+        { name: 'Optimized', carbon: Math.round(carbonMetrics.total_carbon_optimized || 0), fill: '#3a2d2aff' },
+        { name: 'Baseline (FCFS)', carbon: Math.round(carbonMetrics.total_carbon_baseline || 0), fill: '#cbc0b9ff' },
     ];
 
     
@@ -254,19 +255,28 @@ function Results() {
             </Alert>
 
             {}
-            <Grid container spacing={3} mb={3}>
-                <Grid item xs={12} md={6}>
-                    <Card sx={{ height: 400 }}>
-                        <CardContent sx={{ height: '100%' }}>
-                            <Typography variant="h6" gutterBottom>Optimized vs Baseline</Typography>
-                            <Box height="calc(100% - 40px)">
-                                <ResponsiveContainer width="100%" height="100%">
+            <Grid container spacing={12.5} mb={10}>
+                <Grid item xs={12} md={8}>
+                    <Card sx={{ height: 400, width: 800}}>
+                        <CardContent sx={{ height: '125%' }}>
+                            <Typography variant="h6" gutterBottom>Optimized Model vs Baseline Model</Typography>
+                            <Box height="calc(100% - 30px)">
+                                <ResponsiveContainer width="100%" height="75%">
                                     <BarChart data={comparisonData} layout="vertical">
                                         <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis type="number" />
-                                        <YAxis dataKey="name" type="category" width={120} />
+                                        <XAxis type="number"
+                                           domain={[0,50000]
+                                         }
+                                         />
+                                        <YAxis dataKey="name" type="category" width={75} />
                                         <Tooltip formatter={(value) => [`${value.toLocaleString()} gCO₂`, 'Carbon']} />
-                                        <Bar dataKey="carbon" radius={[0, 4, 4, 0]} barSize={60}>
+                                        <Bar dataKey="carbon" radius={[0, 4, 4, 0]} barSize={50}>
+                                            {/* show the number at bar end */}
+                                            <LabelList dataKey="carbon"
+                                                       position="right"
+                                                       style={{ fill: '#000', fontSize: 14 }}
+                                            /> 
+
                                             {comparisonData.map((entry, index) => (
                                                 <Cell key={index} fill={entry.fill} />
                                             ))}
@@ -278,8 +288,8 @@ function Results() {
                     </Card>
                 </Grid>
 
-                <Grid item xs={12} md={6}>
-                    <Card sx={{ height: 400 }}>
+                <Grid item xs={12} md={4}>
+                    <Card sx={{ height: 400, width: 500}}>
                         <CardContent sx={{ height: '100%' }}>
                             <Typography variant="h6" gutterBottom>Task Distribution by Datacenter</Typography>
                             <Box height="calc(100% - 40px)">
@@ -310,7 +320,7 @@ function Results() {
 
             {}
             {scheduleData.length > 0 && (
-                <Card sx={{ mb: 3 }}>
+                <Card sx={{ mb: 10 }}>
                     <CardContent>
                         <Typography variant="h6" gutterBottom>Workload Schedule Timeline</Typography>
                         <Typography variant="body2" color="text.secondary" mb={2}>
@@ -334,16 +344,16 @@ function Results() {
                             ))}
                         </Box>
 
-                        <Box height={350}>
+                        <Box height={500}>
                             <ResponsiveContainer width="100%" height="100%">
-                                <ScatterChart margin={{ top: 20, right: 30, bottom: 40, left: 100 }}>
+                                <ScatterChart margin={{ top: 20, right: 60, bottom: 40, left: 60 }}>
                                     <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                                     <XAxis
                                         type="number"
                                         dataKey="x"
                                         name="Hour"
-                                        domain={[0, 24]}
-                                        ticks={[0, 4, 8, 12, 16, 20, 24]}
+                                        domain={[0, 18]}
+                                        ticks={[0, 2, 4, 6, 8, 10, 12, 14, 16]}
                                         tickFormatter={(value) => `${value}:00`}
                                         label={{
                                             value: 'Time of Day',
@@ -396,7 +406,7 @@ function Results() {
             <Card sx={{ mb: 3 }}>
                 <CardContent>
                     <Typography variant="h6" gutterBottom>Carbon Emissions by Datacenter</Typography>
-                    <Box height={250}>
+                    <Box height={500}>
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={distributionData}>
                                 <CartesianGrid strokeDasharray="3 3" />

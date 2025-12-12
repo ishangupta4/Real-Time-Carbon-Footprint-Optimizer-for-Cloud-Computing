@@ -66,7 +66,17 @@ def greedy_schedule(
             return dc_info.get('intensity', 999)
         
         available_dcs.sort(key=get_carbon_intensity)
-        
+
+        DEFAULT_INTENSITY = 1_000_000
+        def get_carbon_intensity(dc):
+            dc_info = carbon_data.get(dc.id)
+            if dc_info is None or 'intensity' not in dc_info:
+                print(f"    WARNING: no carbon data for DC '{dc.id}', using default")
+                return DEFAULT_INTENSITY
+            return dc_info['intensity']
+        available_dcs.sort(
+            key=lambda dc: (get_carbon_intensity(dc), dc.cost_per_core_hour)
+        )        
         
         print(f"  After sort:")
         for dc in available_dcs:

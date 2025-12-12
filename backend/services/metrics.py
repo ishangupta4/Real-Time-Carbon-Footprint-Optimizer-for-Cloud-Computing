@@ -17,7 +17,7 @@ class MetricsCalculator:
         opt_carbon = optimized.total_carbon
         base_carbon = baseline.total_carbon
         
-        carbon_saved = base_carbon - opt_carbon
+        carbon_saved = abs(base_carbon - opt_carbon)
         percent_reduction = (carbon_saved / base_carbon * 100) if base_carbon > 0 else 0
         
         
